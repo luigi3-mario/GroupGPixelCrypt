@@ -9,6 +9,7 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Grid>
-
+        <Image x:Name="imageControl"></Image>
+        <Button x:Name="openImageButton" Margin="535,500,0,0" VerticalAlignment="Top">Open image</Button>
     </Grid>
 </Page>
