@@ -26,5 +26,20 @@ namespace GroupGPixelCrypt
         {
             this.InitializeComponent();
         }
+
+        private void OpenImageButton_Click(object sender, RoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void OpenImageOrTextButton_Click(object sender, RoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void SaveOutputButton_Click(object sender, RoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
