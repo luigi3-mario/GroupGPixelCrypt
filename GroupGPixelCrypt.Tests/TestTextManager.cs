@@ -17,7 +17,7 @@ namespace GroupGPixelCrypt.Tests
         {
             TextManager textManager = new TextManager();
             string testMessage = "Hallo";
-            List<byte> result = (List<byte>)textManager.BreakDownText(testMessage, 3);
+            List<byte> result = (List<byte>)textManager.GetMessage(testMessage, 3);
             CollectionAssert.AreEqual(this.expectedBytes3Bpcc, result);
         }
     }

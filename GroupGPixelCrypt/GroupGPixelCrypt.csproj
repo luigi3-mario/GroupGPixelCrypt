@@ -119,11 +119,15 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Model\Embedder.cs" />
+    <Compile Include="Model\Extractor.cs" />
     <Compile Include="Model\image\HiddenImageManager.cs" />
     <Compile Include="Model\image\ImageManager.cs" />
     <Compile Include="Model\image\pixelBgr8.cs" />
     <Compile Include="Model\image\pixelL1.cs" />
     <Compile Include="Model\ListExtensions.cs" />
+    <Compile Include="Model\Mask.cs" />
+    <Compile Include="Model\Mode.cs" />
     <Compile Include="Model\text\TextManager.cs" />
     <Compile Include="ViewModel\ViewModel.cs" />
     <Compile Include="View\MainPage.xaml.cs">
@@ -145,6 +149,7 @@
     <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
     <Content Include="Assets\StoreLogo.png" />
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
+    <Content Include="Assets\PaperMario.png" />
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">

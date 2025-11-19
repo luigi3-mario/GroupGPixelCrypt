@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using System.Threading.Tasks;
@@ -63,7 +64,7 @@ namespace GroupGPixelCrypt.Model.image
             this.Alpha = alpha;
         }
 
-        public static PixelBgr8[] FromArray(SoftwareBitmap source)
+        public static PixelBgr8[] FromSoftwareBitmap(SoftwareBitmap source)
         {
             source = ImageManager.ConvertToCorrectFormat(source);
             byte[] sourcePixels = new byte[source.PixelWidth * source.PixelHeight * numberOfChannels];
@@ -77,6 +78,27 @@ namespace GroupGPixelCrypt.Model.image
                 byte alpha = sourcePixels[i * numberOfChannels + 3];
                 result[i] = new PixelBgr8(blue, green, red, alpha);
             }
+
+            return result;
+        }
+
+        public static SoftwareBitmap WriteToSoftwareBitmap(PixelBgr8[] source, SoftwareBitmap original)
+        {
+            original.CopyFromBuffer(ToByteArray(source).AsBuffer());
+            return original;
+        }
+
+        public static byte[] ToByteArray(PixelBgr8[] source)
+        {
+            byte[] result = new byte[source.Length * numberOfChannels];
+            for (int i = 0; i * numberOfChannels < result.Length; i++)
+            {
+                result[i * numberOfChannels] = source[i].Blue;
+                result[i * numberOfChannels + 1] = source[i].Green;
+                result[i * numberOfChannels + 2] = source[i].Red;
+                result[i * numberOfChannels + 3] = source[i].Alpha;
+            }
+
             return result;
         }
     }

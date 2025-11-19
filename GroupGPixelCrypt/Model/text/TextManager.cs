@@ -36,12 +36,19 @@ namespace GroupGPixelCrypt.Model
 
         #region Methods        
         /// <summary>
-        /// Breaks down bytes of text into a series of numbers.
+        /// Gets the message.
         /// </summary>
         /// <param name="message">The message.</param>
         /// <param name="bitsPerChannel">The bits per channel.</param>
-        /// <returns>the bits of the text broken down and reassembled into groups of length bitsPerChannel</returns>
-        public IList<byte> BreakDownText(String message, int bitsPerChannel)
+        /// <returns>The bytes for the encoder to encode</returns>
+        public IList<byte> GetMessage(String message, int bitsPerChannel)
+        {
+            string messageWithTerminator = message + "#-.-#";
+            return this.BreakDownText(messageWithTerminator, bitsPerChannel);
+        }
+
+
+        private IList<byte> BreakDownText(String message, int bitsPerChannel)
         {
             IList<byte> brokenDownChar;
             List<byte> result = new List<byte>();//We may not use IList here because we need to use AddRange
@@ -55,7 +62,7 @@ namespace GroupGPixelCrypt.Model
         }
         private IList<byte> breakDownChar(char input)
         {
-            byte maskOneBit = this.getMask(1);
+            byte maskOneBit = getMask(1);
             byte nextValue;
             IList<byte> result = new List<byte>();
             for (int i = 0; i < CharLength; i++)
@@ -66,7 +73,25 @@ namespace GroupGPixelCrypt.Model
             return result;
         }
 
-        private byte getMask(int bitsPerChannel)
+        private IList<byte> combineBits(IList<byte> bits, int bitsPerChannel)
+        {
+            ICollection<IList<byte>> chunks = bits.ChunkBy(bitsPerChannel);
+            List<byte> result = new List<byte>();
+            foreach (IList<byte> chunk in chunks)
+            {
+                byte combinedByte = 0;
+                for (int i = 0; i < chunk.Count; i++)
+                {
+                    combinedByte |= (byte)(chunk[i] >> (byteLength - bitsPerChannel + i));
+                }
+
+                result.Add(combinedByte);
+            }
+
+            return result;
+        }
+
+        public static byte getMask(int bitsPerChannel)
         {
             switch (bitsPerChannel)
             {
@@ -90,26 +115,6 @@ namespace GroupGPixelCrypt.Model
                     throw new ArgumentException("bitsPerChannel must be between 1 and 8");
             }
         }
-
-        private IList<byte> combineBits(IList<byte> bits, int bitsPerChannel)
-        {
-            ICollection<IList<byte>> chunks = bits.ChunkBy(bitsPerChannel);
-            List<byte> result = new List<byte>();
-            foreach (IList<byte> chunk in chunks)
-            {
-                byte combinedByte = 0;
-                for (int i = 0; i < chunk.Count; i++)
-                {
-                    combinedByte |= (byte)(chunk[i] >> (byteLength - bitsPerChannel + i));
-                }
-
-                result.Add(combinedByte);
-            }
-
-            return result;
-        }
-
-        
 
         #endregion
     }

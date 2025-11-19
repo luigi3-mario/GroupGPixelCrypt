@@ -74,6 +74,8 @@
                     Width="120" Margin="0,8,0,0"
                     HorizontalAlignment="Center"
                     Click="SaveOutputButton_Click"/>
+
+            <Image x:Name="tempImage"></Image> <!-- TODO: Remove this line after testing-->
         </StackPanel>
 
     </Grid>
