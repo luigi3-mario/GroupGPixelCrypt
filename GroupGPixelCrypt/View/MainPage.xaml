@@ -8,11 +8,6 @@
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-<<<<<<< HEAD:GroupGPixelCrypt/View/MainPage.xaml
-    <Grid>
-        <Image x:Name="imageControl"></Image>
-        <Button x:Name="openImageButton" Margin="535,500,0,0" VerticalAlignment="Top">Open image</Button>
-=======
     <Grid Margin="40">
 
         <Grid.ColumnDefinitions>
@@ -81,6 +76,5 @@
                     Click="SaveOutputButton_Click"/>
         </StackPanel>
 
->>>>>>> 8fded64c712eaebfd928782b0b5308bc76632861:GroupGPixelCrypt/MainPage.xaml
     </Grid>
 </Page>

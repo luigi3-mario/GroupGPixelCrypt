@@ -38,35 +38,25 @@ namespace GroupGPixelCrypt
         public MainPage()
         {
             this.InitializeComponent();
-            this.openImageButton.Click += this.onOpenImageButtonClicked;
         }
 
         #endregion
 
         #region methods
 
-        private async void onOpenImageButtonClicked(object sender, object eventArgs)
+        public void SaveOutputButton_Click(object sender, object eventArgs)
         {
-            try
-            {
-                FileOpenPicker fileOpenPicker = new FileOpenPicker();
-                fileOpenPicker.SuggestedStartLocation = PickerLocationId.PicturesLibrary;
-                fileOpenPicker.FileTypeFilter.Add(".bmp");
-                fileOpenPicker.FileTypeFilter.Add(".png");
-                fileOpenPicker.ViewMode = PickerViewMode.Thumbnail;
+            throw new NotImplementedException();
+        }
 
-                var inputImage = await fileOpenPicker.PickSingleFileAsync();
+        public void OpenImageOrTextButton_Click(object sender, object eventArgs)
+        {
+            throw new NotImplementedException();
+        }
 
-                this.imageManager = await ImageManager.FromImageFile(inputImage);
-
-                var source = new SoftwareBitmapSource();
-                await source.SetBitmapAsync(this.imageManager.SoftwareBitmap);
-                this.imageControl.Source = source;
-            }
-            catch (Exception exception)
-            {
-                Debug.WriteLine(exception.Message);
-            }
+        public void OpenImageButton_Click(object sender, object eventArgs)
+        {
+            throw new NotImplementedException();
         }
 
         #endregion
