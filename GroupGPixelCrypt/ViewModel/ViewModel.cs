@@ -1,48 +1,50 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using GroupGPixelCrypt.Model;
 using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
-using GroupGPixelCrypt.Model;
 
 namespace GroupGPixelCrypt.ViewModel
 {
-    public class ViewModel
+    public class MainViewModel
     {
-        #region Data Members
-
-        private ImageManager imageManager;
-
-        #endregion
-
-        #region Properties
-
-        public SoftwareBitmap Pixels => this.imageManager?.SoftwareBitmap;
-
-        #endregion
-
-        #region Constructors
-
-        public ViewModel()
-        {
-
-        }
-
-        #endregion
-
-        #region Methods
+        public SoftwareBitmap SourceBitmap { get; private set; }
+        public SoftwareBitmap MessageBitmap { get; private set; }
+        public SoftwareBitmap TargetBitmap { get; private set; }
 
         /// <summary>
-        /// Shows the image.
+        /// Load a source image file into SourceBitmap
         /// </summary>
-        /// <param name="imageFile">The image file.</param>
-        public async Task UpdateImage(StorageFile imageFile)
+        public async Task LoadSourceImage(StorageFile file)
         {
-            this.imageManager = await ImageManager.FromImageFile(imageFile);
+            if (file != null)
+            {
+                var manager = await ImageManager.FromImageFile(file);
+                SourceBitmap = manager.SoftwareBitmap;
+            }
         }
 
-        #endregion
+        /// <summary>
+        /// Load a message image file into MessageBitmap
+        /// </summary>
+        public async Task LoadMessageImage(StorageFile file)
+        {
+            if (file != null)
+            {
+                var manager = await ImageManager.FromImageFile(file);
+                MessageBitmap = manager.SoftwareBitmap;
+            }
+        }
+
+        /// <summary>
+        /// Embed the message into the source image
+        /// </summary>
+        public void EmbedMessage(int bitsPerChannel = 1)
+        {
+            if (SourceBitmap != null && MessageBitmap != null)
+            {
+                Embedder embedder = new Embedder(MessageBitmap, SourceBitmap);
+                TargetBitmap = embedder.EmbedMessage();
+            }
+        }
     }
 }
