@@ -18,9 +18,11 @@ namespace GroupGPixelCrypt.Model
         private TextManager textManager;
         private byte bitsPerChannel;
         private Mode mode;
-        private int currentIndex;
+        private int offset;
         private delegate PixelBgr8 EmbedIntoPixelDelegate(byte[] messageBytes, int index, PixelBgr8 coverPixel);
         private EmbedIntoPixelDelegate embedIntoPixel;
+        private const int headerSize = 2;
+        private int currentIndex;
 
         #endregion
 
@@ -45,6 +47,7 @@ namespace GroupGPixelCrypt.Model
             this.visibleImage = visibleImage;
             this.bitsPerChannel = bitsPerChannel;
             this.mode = Mode.Text;
+            this.initializEmbedIntoPixelDelegate();
         }
 
         /// <summary>
@@ -60,7 +63,9 @@ namespace GroupGPixelCrypt.Model
             PixelL1[] pixelL1Array = PixelL1.FromSoftwareBitmap(messageImage);
             this.message = PixelL1.ToByteArray(pixelL1Array).ToList();
             this.mode = Mode.Image;
+            this.initializEmbedIntoPixelDelegate();
         }
+
 
         #endregion
 
@@ -70,36 +75,37 @@ namespace GroupGPixelCrypt.Model
         /// Embeds the message.
         /// </summary>
         /// <returns>The image with the message hidden inside</returns>
-        public SoftwareBitmap embedMessage()
+        public SoftwareBitmap EmbedMessage()
         {
+            byte[] messageArray = this.message.ToArray();
             PixelBgr8[] pixelBgr8Array = PixelBgr8.FromSoftwareBitmap(this.visibleImage);
             PixelBgr8[] headerPixels = this.generateHeader();
             Array.Copy(headerPixels, 0, pixelBgr8Array, 0, headerPixels.Length);
             if (this.mode == Mode.Image)
             {
-                this.currentIndex = 2;
+                this.offset = headerSize;
             }
             else
             {
-                this.currentIndex = 0;
+                this.offset = 0;
             }
-            while (this.currentIndex < this.message.Count)
+            for (this.currentIndex = 0; this.currentIndex + this.offset < messageArray.Length; this.currentIndex++)
             {
-                pixelBgr8Array[this.currentIndex] = this.embedIntoPixel(this.message as byte[], this.currentIndex, pixelBgr8Array[this.currentIndex]);
+                pixelBgr8Array[this.currentIndex + headerSize] = this.embedIntoPixel(messageArray, this.currentIndex + this.offset, pixelBgr8Array[this.currentIndex + headerSize]);
             }
             return PixelBgr8.WriteToSoftwareBitmap(pixelBgr8Array, this.visibleImage);
         }
 
         private void initializEmbedIntoPixelDelegate()
         {
-            PixelBgr8 embedPixelIntoPixel(byte[] pixelBytes, int index, PixelBgr8 coverPixel)
+            PixelBgr8 EmbedPixelIntoPixel(byte[] pixelBytes, int index, PixelBgr8 coverPixel)
             {
                 byte newBlue = (byte)((coverPixel.Blue & this.Mask) | pixelBytes[index]);
                 this.currentIndex++;
                 return new PixelBgr8(newBlue, coverPixel.Green, coverPixel.Red, coverPixel.Alpha);
             }
 
-            PixelBgr8 embedTextIntoPixel(byte[] messageBytes, int index, PixelBgr8 coverPixel)
+            PixelBgr8 EmbedTextIntoPixel(byte[] messageBytes, int index, PixelBgr8 coverPixel)
             {
                 byte newBlue = (byte)((coverPixel.Blue & this.Mask) | messageBytes[index]);
                 byte newGreen = (byte)((coverPixel.Blue & this.Mask) | messageBytes[index + 1]);
@@ -110,11 +116,11 @@ namespace GroupGPixelCrypt.Model
 
             if (this.mode == Mode.Image)
             {
-                this.embedIntoPixel = embedPixelIntoPixel;
+                this.embedIntoPixel = EmbedPixelIntoPixel;
             }
             else
             {
-                this.embedIntoPixel = embedTextIntoPixel;
+                this.embedIntoPixel = EmbedTextIntoPixel;
             }
         }
 

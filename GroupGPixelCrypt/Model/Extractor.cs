@@ -26,12 +26,12 @@ namespace GroupGPixelCrypt.Model
         private const int HeaderLength = 2;
         private int bitsExtracted;
         private ushort currentValue;
-        private int width;
-        private int height;
 
         #endregion
 
         #region Properties
+        public int Width { get; }
+        public int Height { get; }
 
         private byte Mask => Model.Mask.SetMaskForLower(this.bitsPerChannel);
 
@@ -48,8 +48,8 @@ namespace GroupGPixelCrypt.Model
             this.bitsExtracted = 0;
             this.extractedStringMessage = new StringBuilder();
             this.setMode();
-            this.width = sourceImage.PixelWidth;
-            this.height = sourceImage.PixelHeight;
+            this.Width = sourceImage.PixelWidth;
+            this.Height = sourceImage.PixelHeight;
         }
 
         public void setMode()
@@ -121,7 +121,7 @@ namespace GroupGPixelCrypt.Model
         /// Extracts the image.
         /// </summary>
         /// <returns></returns>
-        public SoftwareBitmap extractImage()
+        public SoftwareBitmap ExtractImage()
         {
             PixelL1 [] extractedPixels = new PixelL1[(this.pixels.Length)];
             for(int i = 0; i < this.pixels.Length; i++)
@@ -131,7 +131,7 @@ namespace GroupGPixelCrypt.Model
                 extractedPixels[i] = new PixelL1(color);
             }
             byte[] byteArray = PixelL1.ToByteArray(extractedPixels);
-            SoftwareBitmap result = new SoftwareBitmap(BitmapPixelFormat.Bgra8, this.width, this.height);
+            SoftwareBitmap result = new SoftwareBitmap(BitmapPixelFormat.Bgra8, this.Width, this.Height);
             result.CopyFromBuffer(byteArray.AsBuffer());
             return result;
         }

@@ -117,5 +117,10 @@ namespace GroupGPixelCrypt.Model.image
         {
             return new PixelBgr8(255, 255, 255, 255);
         }
+
+        public static PixelBgr8 fromPixelL1(PixelL1 pixel)
+        {
+            return new PixelBgr8(pixel.Luma, pixel.Luma, pixel.Luma, 255);
+        }
     }
 }

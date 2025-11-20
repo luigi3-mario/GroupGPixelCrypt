@@ -61,6 +61,11 @@ namespace GroupGPixelCrypt.Model.image
             return new PixelL1((byte)(average >= 128 ? 1 : 0));
         }
 
+        /// <summary>
+        /// Converts to bytearray.
+        /// </summary>
+        /// <param name="pixelL1Array">The pixel l1 array.</param>
+        /// <returns></returns>
         public static byte[] ToByteArray(PixelL1[] pixelL1Array)
         {
             byte[] result = new byte[pixelL1Array.Length];
@@ -69,6 +74,33 @@ namespace GroupGPixelCrypt.Model.image
                 result[i] = pixelL1Array[i].Luma;
             }
             return result;
+        }
+
+        /// <summary>
+        /// Converts an array of bytes to an array of PixelL1.
+        /// </summary>
+        /// <param name="byteArray">The byte array.</param>
+        /// <returns></returns>
+        public static PixelL1[] FromByteArray(byte[] byteArray)
+        {
+            PixelL1[] result = new PixelL1[byteArray.Length];
+            for (int i = 0; i < byteArray.Length; i++)
+            {
+                result[i] = new PixelL1(byteArray[i]);
+            }
+
+            return result;
+        }
+
+        public static SoftwareBitmap ToSoftwareBitmap(PixelL1[] pixelArray, int width, int height)
+        {
+            PixelBgr8[] bgraPixels = new PixelBgr8[pixelArray.Length];
+            foreach (PixelL1 pixelL1 in pixelArray)
+            {
+                bgraPixels[Array.IndexOf(pixelArray, pixelL1)] = PixelBgr8.fromPixelL1(pixelL1);
+            }
+            SoftwareBitmap result = new SoftwareBitmap(BitmapPixelFormat.Bgra8, width, height);
+            return PixelBgr8.WriteToSoftwareBitmap(bgraPixels, result);
         }
     }
 }
