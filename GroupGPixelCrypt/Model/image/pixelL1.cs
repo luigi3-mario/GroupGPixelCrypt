@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.Text;
-using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace GroupGPixelCrypt.Model.image
 {
@@ -12,44 +8,43 @@ namespace GroupGPixelCrypt.Model.image
     {
         private static int bgraChannels = 4;
 
-        /// <summary>
-        /// Gets or sets the channels.
-        /// </summary>
-        /// <value>
-        /// The channels.
-        /// </value>
         public byte Luma { get; }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PixelL1"/> class.
-        /// </summary>
-        /// <param name="value">The value.</param>
         public PixelL1(byte value)
         {
             if (value > 1 || value < 0)
-            {
-                throw new ArgumentException("Can only be 0 or 1");
-            }
+                throw new ArgumentException("Luma must be 0 or 1");
             this.Luma = value;
         }
 
-        /// <summary>
-        /// Takes in a SoftwareBitmap and converts it to an array of PixelL1.
-        /// </summary>
-        /// <param name="source">The source.</param>
-        /// <returns></returns>
         public static PixelL1[] FromSoftwareBitmap(SoftwareBitmap source)
         {
             source = ImageManager.ConvertToCorrectFormat(source);
+<<<<<<< HEAD
             PixelBgr8[] bgraPixels = PixelBgr8.FromSoftwareBitmap(source);
             PixelL1[] result = new PixelL1[source.PixelWidth * source.PixelHeight]; 
             for (int i = 0; i < bgraPixels.Length; i++)
             {
                 result[i] = FromBgra8(bgraPixels[i]);
+=======
+            byte[] sourcePixels = new byte[source.PixelWidth * source.PixelHeight * bgraChannels];
+            PixelL1[] result = new PixelL1[source.PixelWidth * source.PixelHeight];
+            source.CopyToBuffer(sourcePixels.AsBuffer());
+
+            for (int i = 0; i < result.Length; i++)
+            {
+                byte blue = sourcePixels[i * bgraChannels];
+                byte green = sourcePixels[i * bgraChannels + 1];
+                byte red = sourcePixels[i * bgraChannels + 2];
+                float avg = (red + green + blue) / 3f;
+                result[i] = new PixelL1((byte)(avg >= 128 ? 1 : 0));
+>>>>>>> 29a97f9b8f88ec95f974e16c43839cda8e332ba9
             }
+
             return result;
         }
 
+<<<<<<< HEAD
         /// <summary>
         /// Turns a bgra8 pixel into a PixelL1.
         /// </summary>
@@ -62,13 +57,41 @@ namespace GroupGPixelCrypt.Model.image
         }
 
         public static byte[] ToByteArray(PixelL1[] pixelL1Array)
+=======
+        public static byte[] ToByteArray(PixelL1[] pixels)
+>>>>>>> 29a97f9b8f88ec95f974e16c43839cda8e332ba9
         {
-            byte[] result = new byte[pixelL1Array.Length];
-            for (int i = 0; i < pixelL1Array.Length; i++)
-            {
-                result[i] = pixelL1Array[i].Luma;
-            }
+            byte[] result = new byte[pixels.Length];
+            for (int i = 0; i < pixels.Length; i++)
+                result[i] = pixels[i].Luma;
             return result;
         }
+
+        public static PixelL1[] FromByteArray(byte[] bytes)
+        {
+            PixelL1[] result = new PixelL1[bytes.Length];
+            for (int i = 0; i < bytes.Length; i++)
+                result[i] = new PixelL1(bytes[i]);
+            return result;
+        }
+
+        public static SoftwareBitmap ToSoftwareBitmap(PixelL1[] pixels, int width, int height)
+        {
+            var bitmap = new SoftwareBitmap(BitmapPixelFormat.Bgra8, width, height, BitmapAlphaMode.Premultiplied);
+            var buffer = new byte[width * height * 4];
+
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                byte v = (byte)(pixels[i].Luma == 1 ? 255 : 0); // map 1 → white, 0 → black
+                buffer[i * 4 + 0] = v; // B
+                buffer[i * 4 + 1] = v; // G
+                buffer[i * 4 + 2] = v; // R
+                buffer[i * 4 + 3] = 255; // A
+            }
+
+            bitmap.CopyFromBuffer(buffer.AsBuffer());
+            return bitmap;
+        }
+
     }
 }

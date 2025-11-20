@@ -1,45 +1,45 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
+using GroupGPixelCrypt.Model;
 using GroupGPixelCrypt.Model.image;
+using System.Diagnostics;
 
-namespace GroupGPixelCrypt.Model
+public class Embedder
 {
-    public class Embedder
+    private readonly byte[] messageBytes;
+    private readonly SoftwareBitmap visibleImage;
+    private readonly byte bitsPerChannel;
+    private readonly Mode mode;
+
+    public Embedder(SoftwareBitmap messageImage, SoftwareBitmap visibleImage)
     {
-        #region Data members
+        if (messageImage == null) throw new ArgumentNullException(nameof(messageImage));
+        if (visibleImage == null) throw new ArgumentNullException(nameof(visibleImage));
 
-        private IList<byte> message;
-        private SoftwareBitmap visibleImage;
-        private TextManager textManager;
-        private byte bitsPerChannel;
-        private Mode mode;
-        private int currentIndex;
-        private delegate PixelBgr8 EmbedIntoPixelDelegate(byte[] messageBytes, int index, PixelBgr8 coverPixel);
-        private EmbedIntoPixelDelegate embedIntoPixel;
+        this.bitsPerChannel = 1;
+        this.visibleImage = visibleImage;
+        this.mode = Mode.Image;
 
-        #endregion
+        // Convert message image to L1 pixel array and then to byte array
+        var pixelL1Array = PixelL1.FromSoftwareBitmap(messageImage);
+        this.messageBytes = PixelL1.ToByteArray(pixelL1Array);
+    }
 
-        #region Properties
+    public SoftwareBitmap EmbedMessage()
+    {
+        var pixels = PixelBgr8.FromSoftwareBitmap(this.visibleImage);
 
-        private byte Mask => Model.Mask.setMaskForUpper(this.bitsPerChannel);
+        // Create header and insert at start of pixel array
+        var header = GenerateHeader();
+        Array.Copy(header, 0, pixels, 0, header.Length);
 
-        #endregion
+        int pixelIndex = header.Length; // start embedding after header
 
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Embedder"/> class.
-        /// </summary>
-        /// <param name="messageString">The message string.</param>
-        /// <param name="bitsPerChannel">The bits per channel.</param>
-        /// <param name="visibleImage">The visible image.</param>
-        public Embedder(String messageString, byte bitsPerChannel, SoftwareBitmap visibleImage)
+        // Convert message bytes into bits
+        var messageBits = new System.Collections.Generic.List<byte>();
+        foreach (byte b in messageBytes)
         {
+<<<<<<< HEAD
             this.textManager = new TextManager();
             this.message = this.textManager.GetMessage(messageString, bitsPerChannel);
             this.visibleImage = visibleImage;
@@ -76,56 +76,63 @@ namespace GroupGPixelCrypt.Model
             PixelBgr8[] headerPixels = this.generateHeader();
             Array.Copy(headerPixels, 0, pixelBgr8Array, 0, headerPixels.Length);
             if (this.mode == Mode.Image)
+=======
+            for (int i = 0; i < 8; i++)
+>>>>>>> 29a97f9b8f88ec95f974e16c43839cda8e332ba9
             {
-                this.currentIndex = 2;
+                messageBits.Add((byte)((b >> i) & 1)); // extract each bit
             }
-            else
-            {
-                this.currentIndex = 0;
-            }
-            while (this.currentIndex < this.message.Count)
-            {
-                pixelBgr8Array[this.currentIndex] = this.embedIntoPixel(this.message as byte[], this.currentIndex, pixelBgr8Array[this.currentIndex]);
-            }
-            return PixelBgr8.WriteToSoftwareBitmap(pixelBgr8Array, this.visibleImage);
         }
 
-        private void initializEmbedIntoPixelDelegate()
+        if (messageBits.Count > pixels.Length - header.Length)
         {
-            PixelBgr8 embedPixelIntoPixel(byte[] pixelBytes, int index, PixelBgr8 coverPixel)
-            {
-                byte newBlue = (byte)((coverPixel.Blue & this.Mask) | pixelBytes[index]);
-                this.currentIndex++;
-                return new PixelBgr8(newBlue, coverPixel.Green, coverPixel.Red, coverPixel.Alpha);
-            }
-
-            PixelBgr8 embedTextIntoPixel(byte[] messageBytes, int index, PixelBgr8 coverPixel)
-            {
-                byte newBlue = (byte)((coverPixel.Blue & this.Mask) | messageBytes[index]);
-                byte newGreen = (byte)((coverPixel.Blue & this.Mask) | messageBytes[index + 1]);
-                byte newRed = (byte)((coverPixel.Blue & this.Mask) | messageBytes[index + 2]);
-                this.currentIndex += 3;
-                return new PixelBgr8(newBlue, newGreen, newRed, coverPixel.Alpha);
-            }
-
-            if (this.mode == Mode.Image)
-            {
-                this.embedIntoPixel = embedPixelIntoPixel;
-            }
-            else
-            {
-                this.embedIntoPixel = embedTextIntoPixel;
-            }
+            Debug.WriteLine("Warning: Message is too large to embed fully in this image!");
         }
 
-        private PixelBgr8[] generateHeader()
+        // Embed each bit of the message into the LSB of the pixel blue channel
+        for (int bitIndex = 0; bitIndex < messageBits.Count && pixelIndex < pixels.Length; bitIndex++, pixelIndex++)
         {
-            PixelBgr8 firstPixel = new PixelBgr8(123, 123, 123, 255);
-            byte modeSignal = this.mode == Mode.Text ? (byte)1 : (byte)0;
-            PixelBgr8 secondPixel = new PixelBgr8(modeSignal, this.bitsPerChannel, 0, 255);//TODO: change red for encryption later
-            return new PixelBgr8[] { firstPixel, secondPixel };
+            byte bit = messageBits[bitIndex];
+            PixelBgr8 original = pixels[pixelIndex];
+
+            pixels[pixelIndex] = new PixelBgr8(
+                (byte)((original.Blue & 0xFE) | bit),
+                original.Green,
+                original.Red,
+                original.Alpha
+            );
+
+           
         }
 
-        #endregion
+        return PixelBgr8.WriteToSoftwareBitmap(pixels, this.visibleImage);
+    }
+
+
+    private PixelBgr8[] GenerateHeader()
+    {
+        int messageWidth = (int)Math.Ceiling(Math.Sqrt(messageBytes.Length));
+        int messageHeight = messageWidth;
+
+        // First pixel: marker
+        var firstPixel = new PixelBgr8(123, 123, 123, 255);
+
+        // Second pixel: mode and bits per channel, plus low bytes of width/height
+        byte modeSignal = (byte)(this.mode == Mode.Text ? 1 : 0);
+        var secondPixel = new PixelBgr8(
+            modeSignal,                 // Blue: mode
+            this.bitsPerChannel,        // Green: bits per channel
+            (byte)(messageWidth & 0xFF),  // Red: low byte width
+            (byte)(messageHeight & 0xFF)  // Alpha: low byte height
+        );
+
+        // Third pixel: high bytes of width/height
+        var thirdPixel = new PixelBgr8(
+            (byte)((messageWidth >> 8) & 0xFF),   // Blue: high byte width
+            (byte)((messageHeight >> 8) & 0xFF),  // Green: high byte height
+            0, 0
+        );
+
+        return new[] { firstPixel, secondPixel, thirdPixel };
     }
 }
