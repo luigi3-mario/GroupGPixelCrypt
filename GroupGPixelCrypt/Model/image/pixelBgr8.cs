@@ -72,14 +72,25 @@ namespace GroupGPixelCrypt.Model.image
             source.CopyToBuffer(sourcePixels.AsBuffer());
             for (int i = 0; i * numberOfChannels < sourcePixels.Length; i++)
             {
-                byte blue = sourcePixels[i * numberOfChannels];
-                byte green = sourcePixels[i * numberOfChannels + 1];
-                byte red = sourcePixels[i * numberOfChannels + 2];
-                byte alpha = sourcePixels[i * numberOfChannels + 3];
-                result[i] = new PixelBgr8(blue, green, red, alpha);
+                result[i] = singlePixelFromByteArray(sourcePixels, i);
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Singles the pixel from byte array.
+        /// </summary>
+        /// <param name="sourcePixels">The source pixels.</param>
+        /// <param name="index">The index.</param>
+        /// <returns></returns>
+        public static PixelBgr8 singlePixelFromByteArray(byte[] sourcePixels, int index)
+        {
+            byte blue = sourcePixels[index * numberOfChannels];
+            byte green = sourcePixels[index * numberOfChannels + 1];
+            byte red = sourcePixels[index * numberOfChannels + 2];
+            byte alpha = sourcePixels[index * numberOfChannels + 3];
+            return new PixelBgr8(blue, green, red, alpha);
         }
 
         public static SoftwareBitmap WriteToSoftwareBitmap(PixelBgr8[] source, SoftwareBitmap original)
@@ -100,6 +111,11 @@ namespace GroupGPixelCrypt.Model.image
             }
 
             return result;
+        }
+
+        public static PixelBgr8 whitePixel()
+        {
+            return new PixelBgr8(255, 255, 255, 255);
         }
     }
 }

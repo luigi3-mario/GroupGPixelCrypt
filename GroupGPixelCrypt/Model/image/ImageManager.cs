@@ -10,6 +10,7 @@ using Windows.Graphics.Imaging;
 using Windows.Media.Audio;
 using Windows.Storage;
 using Windows.Storage.Streams;
+using GroupGPixelCrypt.Model.image;
 
 namespace GroupGPixelCrypt.Model
 {
@@ -54,6 +55,35 @@ namespace GroupGPixelCrypt.Model
             }
 
             return softwareBitmap;
+        }
+
+        public SoftwareBitmap resize(SoftwareBitmap image, int newWidth, int newHeight)
+        {
+            PixelBgr8 [] pixels = PixelBgr8.FromSoftwareBitmap(image);
+            List<PixelBgr8> resizedPixels = new List<PixelBgr8>();
+            IList<PixelBgr8> currentRow = new List<PixelBgr8>();
+            for (int i = 0; i < image.PixelHeight; i++)
+            {
+                int pixelIndex = i * image.PixelWidth;
+                currentRow = pixels.ToList().GetRange(pixelIndex, pixelIndex + image.PixelWidth);
+                currentRow = this.resizeRow(currentRow, newWidth);
+                resizedPixels.AddRange(currentRow);
+            }
+
+            byte[]resizedBytes = PixelBgr8.ToByteArray(resizedPixels.ToArray());
+            SoftwareBitmap newImage = SoftwareBitmap.CreateCopyFromBuffer(resizedBytes.AsBuffer(),
+                BitmapPixelFormat.Bgra8, newWidth, newHeight);
+            return newImage;
+        }
+
+        private IList<PixelBgr8> resizeRow(IList<PixelBgr8> row, int newWidth)
+        {
+            for (int i = 0; i < newWidth - row.Count; i++)
+            {
+                row.Add(PixelBgr8.whitePixel());
+            }
+
+            return row;
         }
         #endregion
     }

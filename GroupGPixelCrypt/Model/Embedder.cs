@@ -54,6 +54,7 @@ namespace GroupGPixelCrypt.Model
         /// <param name="visibleImage">The visible image.</param>
         public Embedder(SoftwareBitmap messageImage, SoftwareBitmap visibleImage)
         {
+            
             this.bitsPerChannel = 1;
             this.visibleImage = visibleImage;
             PixelL1[] pixelL1Array = PixelL1.FromSoftwareBitmap(messageImage);

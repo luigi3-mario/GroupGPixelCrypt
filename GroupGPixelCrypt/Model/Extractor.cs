@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
+using System.Security.Cryptography.X509Certificates;
 using System.ServiceModel;
 using System.Text;
 using System.Threading.Tasks;
@@ -19,12 +21,19 @@ namespace GroupGPixelCrypt.Model
         private Mode mode;
         private PixelBgr8[] pixels;
         private byte bitsPerChannel;
+        private StringBuilder extractedStringMessage;
+        private const int BitsPerChar = 8;
+        private const int HeaderLength = 2;
+        private int bitsExtracted;
+        private ushort currentValue;
+        private int width;
+        private int height;
 
         #endregion
 
         #region Properties
 
-        private byte Mask => Model.Mask.setMaskForUpper(this.bitsPerChannel);
+        private byte Mask => Model.Mask.SetMaskForLower(this.bitsPerChannel);
 
         #endregion
 
@@ -35,7 +44,12 @@ namespace GroupGPixelCrypt.Model
         /// <param name="source">The source.</param>
         public Extractor(SoftwareBitmap sourceImage)
         {
-
+            this.pixels = PixelBgr8.FromSoftwareBitmap(sourceImage);
+            this.bitsExtracted = 0;
+            this.extractedStringMessage = new StringBuilder();
+            this.setMode();
+            this.width = sourceImage.PixelWidth;
+            this.height = sourceImage.PixelHeight;
         }
 
         public void setMode()
@@ -59,6 +73,77 @@ namespace GroupGPixelCrypt.Model
 
             this.bitsPerChannel = secondPixel.Green;
 
+        }
+
+        /// <summary>
+        /// Extracts the string.
+        /// </summary>
+        /// <returns></returns>
+        public String ExtractString()
+        {
+            this.extractedStringMessage = new StringBuilder();
+            this.currentValue = 0;
+            for (int i = HeaderLength; i < this.pixels.Length; i++)
+            {
+                PixelBgr8 currentPixel = this.pixels[i];
+                if (this.extractStringFromPixelAndCheckIfDone(currentPixel))
+                {
+                    this.extractedStringMessage.ToString().Substring(0, this.extractedStringMessage.Length - 5);
+                }
+            }
+            return this.extractedStringMessage.ToString();
+        }
+
+        private bool extractStringFromPixelAndCheckIfDone(PixelBgr8 currentPixel)
+        {
+            foreach (byte channel in currentPixel.Channels)
+            {
+                byte extractedBits = (byte)(channel & this.Mask);
+                this.currentValue = (ushort)(this.currentValue << this.bitsPerChannel);
+                this.currentValue = (ushort)(this.currentValue | extractedBits);
+                byte currentChar = (byte)(this.bitsExtracted % (byte.MaxValue + 1));
+                this.bitsExtracted += this.bitsPerChannel;
+                if (this.bitsExtracted >= BitsPerChar)
+                {
+                    this.extractedStringMessage.Append((char)currentChar);
+                    if (this.isFinishedExtractingString())
+                    {
+                        return true;
+                    }
+                    this.bitsExtracted -= BitsPerChar;
+                    this.currentValue = (ushort)(this.currentValue >> BitsPerChar);
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Extracts the image.
+        /// </summary>
+        /// <returns></returns>
+        public SoftwareBitmap extractImage()
+        {
+            PixelL1 [] extractedPixels = new PixelL1[(this.pixels.Length)];
+            for(int i = 0; i < this.pixels.Length; i++)
+            {
+                PixelBgr8 pixel = this.pixels[i];
+                byte color = (byte)(pixel.Blue & this.Mask);
+                extractedPixels[i] = new PixelL1(color);
+            }
+            byte[] byteArray = PixelL1.ToByteArray(extractedPixels);
+            SoftwareBitmap result = new SoftwareBitmap(BitmapPixelFormat.Bgra8, this.width, this.height);
+            result.CopyFromBuffer(byteArray.AsBuffer());
+            return result;
+        }
+
+        private bool isFinishedExtractingString()
+        {
+            if(this.extractedStringMessage.Length >= 5)
+            {
+                string lastFiveChars = this.extractedStringMessage.ToString().Substring(this.extractedStringMessage.Length - 5, 5);
+                return lastFiveChars.Equals("#-.-#");
+            }
+            return false;
         }
 
         #endregion
