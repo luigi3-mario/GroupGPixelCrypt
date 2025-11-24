@@ -7,8 +7,6 @@ using Windows.Storage.Pickers;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Imaging;
-using GroupGPixelCrypt.Model;
-using GroupGPixelCrypt.Model.image;
 using GroupGPixelCrypt.ViewModel;
 
 namespace GroupGPixelCrypt
@@ -54,10 +52,18 @@ namespace GroupGPixelCrypt
 
         private async void EmbedButton_Click(object sender, RoutedEventArgs e)
         {
-            this.viewModel.EmbedMessage();
-            if (this.viewModel.TargetBitmap != null)
+            try
             {
-                await this.SetImageControl(this.targetImage, this.viewModel.TargetBitmap);
+                this.viewModel.EmbedMessage();
+                if (this.viewModel.TargetBitmap != null)
+                {
+                    await this.SetImageControl(this.targetImage, this.viewModel.TargetBitmap);
+                    Debug.WriteLine("Message embedded successfully.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Embedding failed: {ex.Message}");
             }
         }
 
@@ -72,26 +78,19 @@ namespace GroupGPixelCrypt
 
                 var extractor = new Extractor(this.viewModel.SourceBitmap);
 
-                // First, extract bytes (this sets MessageWidth/MessageHeight internally)
-                var extractedBytes = extractor.ExtractMessageBytes();
+                var extractedBitmap = extractor.ExtractMessageBitmap();
 
-                // Now you can safely read width and height
-                var msgWidth = extractor.MessageWidth;
-                var msgHeight = extractor.MessageHeight;
-
-                var pixels = PixelL1.FromByteArray(extractedBytes);
-                var extractedBitmap = PixelL1.ToSoftwareBitmap(pixels, msgWidth, msgHeight);
+                this.viewModel.SetTargetBitmap(extractedBitmap);
 
                 await this.SetImageControl(this.targetImage, extractedBitmap);
 
-                Debug.WriteLine($"Extraction happened)");
+                Debug.WriteLine("Extraction completed.");
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Extraction failed: {ex.Message}");
             }
         }
-
 
         private async void SaveOutputButton_Click(object sender, RoutedEventArgs e)
         {
@@ -103,26 +102,34 @@ namespace GroupGPixelCrypt
             var picker = new FileSavePicker
             {
                 SuggestedStartLocation = PickerLocationId.PicturesLibrary,
-                SuggestedFileName = "embedded_image"
+                SuggestedFileName = "output_image"
             };
-            picker.FileTypeChoices.Add("PNG", new[] { ".png" });
+            picker.FileTypeChoices.Add("PNG Image", new[] { ".png" });
+            picker.FileTypeChoices.Add("BMP Image", new[] { ".bmp" });
 
             var file = await picker.PickSaveFileAsync();
             if (file != null)
             {
                 using (var stream = await file.OpenAsync(FileAccessMode.ReadWrite))
                 {
-                    var encoder = await BitmapEncoder.CreateAsync(
-                        BitmapEncoder.PngEncoderId, stream);
+                    BitmapEncoder encoder;
+
+                    // ✅ Choose encoder based on extension
+                    if (file.FileType.ToLower() == ".bmp")
+                    {
+                        encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.BmpEncoderId, stream);
+                    }
+                    else
+                    {
+                        encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
+                    }
+
                     encoder.SetSoftwareBitmap(this.viewModel.TargetBitmap);
                     await encoder.FlushAsync();
                 }
             }
         }
 
-        /// <summary>
-        ///     Helper method to pick a source image
-        /// </summary>
         private async Task<StorageFile> PickImageFile()
         {
             var picker = new FileOpenPicker
@@ -136,9 +143,6 @@ namespace GroupGPixelCrypt
             return await picker.PickSingleFileAsync();
         }
 
-        /// <summary>
-        ///     Display a SoftwareBitmap in an Image control
-        /// </summary>
         private async Task SetImageControl(Image control, SoftwareBitmap bitmap)
         {
             if (bitmap == null)

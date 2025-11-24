@@ -51,7 +51,7 @@ namespace GroupGPixelCrypt.Model
         private IList<byte> BreakDownText(String message, int bitsPerChannel)
         {
             IList<byte> brokenDownChar;
-            List<byte> result = new List<byte>();//We may not use IList here because we need to use AddRange
+            List<byte> result = new List<byte>();
             foreach (char messageChar in message.ToCharArray())
             {
                 brokenDownChar = this.breakDownChar(messageChar);
