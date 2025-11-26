@@ -3,11 +3,8 @@ using System.Runtime.InteropServices;
 using Windows.Graphics.Imaging;
 using System.Runtime.InteropServices.WindowsRuntime;
 
-namespace GroupGPixelCrypt.Model.Image
+namespace GroupGPixelCrypt.Model.image
 {
-    /// <summary>
-    /// Represents one BGRA pixel (Blue, Green, Red, Alpha).
-    /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     public struct PixelBgr8
     {
@@ -24,14 +21,6 @@ namespace GroupGPixelCrypt.Model.Image
             Alpha = alpha;
         }
 
-        /// <summary>
-        /// Returns the pixel channels as a tuple (no allocation).
-        /// </summary>
-        public (byte Blue, byte Green, byte Red, byte Alpha) Channels => (Blue, Green, Red, Alpha);
-
-        /// <summary>
-        /// Converts a SoftwareBitmap into an array of PixelBgr8.
-        /// </summary>
         public static PixelBgr8[] FromSoftwareBitmap(SoftwareBitmap source)
         {
             source = ImageManager.ConvertToCorrectFormat(source);
@@ -42,27 +31,16 @@ namespace GroupGPixelCrypt.Model.Image
             var result = new PixelBgr8[pixelCount];
             for (int i = 0; i < pixelCount; i++)
             {
-                result[i] = singlePixelFromByteArray(sourcePixels, i);
+                result[i] = new PixelBgr8(
+                    raw[i * 4 + 0],
+                    raw[i * 4 + 1],
+                    raw[i * 4 + 2],
+                    raw[i * 4 + 3]);
             }
             return result;
         }
 
-        /// <summary>
-        /// Singles the pixel from byte array.
-        /// </summary>
-        /// <param name="sourcePixels">The source pixels.</param>
-        /// <param name="index">The index.</param>
-        /// <returns></returns>
-        public static PixelBgr8 singlePixelFromByteArray(byte[] sourcePixels, int index)
-        {
-            byte blue = sourcePixels[index * numberOfChannels];
-            byte green = sourcePixels[index * numberOfChannels + 1];
-            byte red = sourcePixels[index * numberOfChannels + 2];
-            byte alpha = sourcePixels[index * numberOfChannels + 3];
-            return new PixelBgr8(blue, green, red, alpha);
-        }
-
-        public static SoftwareBitmap WriteToSoftwareBitmap(PixelBgr8[] source, SoftwareBitmap original)
+        public static SoftwareBitmap WriteToSoftwareBitmap(PixelBgr8[] pixels, SoftwareBitmap target)
         {
             if (pixels.Length != target.PixelWidth * target.PixelHeight)
                 throw new ArgumentException("Pixel array size does not match bitmap dimensions.");
@@ -72,9 +50,6 @@ namespace GroupGPixelCrypt.Model.Image
             return target;
         }
 
-        /// <summary>
-        /// Converts PixelBgr8 array into raw BGRA byte array.
-        /// </summary>
         public static byte[] ToByteArray(PixelBgr8[] pixels)
         {
             byte[] raw = new byte[pixels.Length * 4];
@@ -86,11 +61,6 @@ namespace GroupGPixelCrypt.Model.Image
                 raw[i * 4 + 3] = pixels[i].Alpha;
             }
             return raw;
-        }
-
-        public static PixelBgr8 whitePixel()
-        {
-            return new PixelBgr8(255, 255, 255, 255);
         }
     }
 }

@@ -1,64 +1,46 @@
-﻿using System;
+﻿using GroupGPixelCrypt.Model.image;
+using GroupGPixelCrypt.Model;
+using System;
 using Windows.Graphics.Imaging;
-using GroupGPixelCrypt.Model.image;
-using GroupGPixelCrypt.Model.Image;
 
 public class Extractor
 {
-    #region Data members
-
     private readonly SoftwareBitmap embeddedImage;
-
-    #endregion
-
-    #region Constructors
 
     public Extractor(SoftwareBitmap embeddedImage)
     {
-        if (embeddedImage == null)
-        {
-            throw new ArgumentNullException(nameof(embeddedImage));
-        }
-
+        if (embeddedImage == null) throw new ArgumentNullException(nameof(embeddedImage));
         this.embeddedImage = ImageManager.ConvertToCorrectFormat(embeddedImage);
     }
 
-    #endregion
-
-    #region Methods
-
     /// <summary>
-    ///     Extracts the hidden message as a monochrome SoftwareBitmap.
+    /// Extracts the hidden message as a monochrome SoftwareBitmap.
     /// </summary>
     public SoftwareBitmap ExtractMessageBitmap()
     {
         var pixels = PixelBgr8.FromSoftwareBitmap(this.embeddedImage);
->>>>>>> 29a97f9b8f88ec95f974e16c43839cda8e332ba9
 
         if (pixels.Length == 0)
-        {
             throw new InvalidOperationException("Image is empty.");
-        }
 
+        // ✅ Check marker pixel
         var marker = pixels[0];
         if (marker.Red != 123 || marker.Green != 123 || marker.Blue != 123)
-        {
             throw new InvalidOperationException("No embedded message found (marker pixel missing).");
-        }
 
-        var width = this.embeddedImage.PixelWidth;
-        var height = this.embeddedImage.PixelHeight;
+        int width = embeddedImage.PixelWidth;
+        int height = embeddedImage.PixelHeight;
 
         var resultPixels = new PixelL1[pixels.Length];
 
-        for (var i = 0; i < pixels.Length; i++)
+        // ✅ Extract LSB from blue channel for every pixel
+        for (int i = 0; i < pixels.Length; i++)
         {
-            var bit = (byte)(pixels[i].Blue & 0x01);
+            byte bit = (byte)(pixels[i].Blue & 0x01);
             resultPixels[i] = new PixelL1(bit);
         }
 
+        // ✅ Convert to monochrome bitmap
         return PixelL1.ToSoftwareBitmap(resultPixels, width, height);
     }
-
-    #endregion
 }
