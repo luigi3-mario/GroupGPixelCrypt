@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
 using Windows.Storage.Streams;
+using GroupGPixelCrypt.Model.image;
 
 public class ImageManager
 {

@@ -33,6 +33,7 @@ public class Extractor
     public SoftwareBitmap ExtractMessageBitmap()
     {
         var pixels = PixelBgr8.FromSoftwareBitmap(this.embeddedImage);
+>>>>>>> 29a97f9b8f88ec95f974e16c43839cda8e332ba9
 
         if (pixels.Length == 0)
         {

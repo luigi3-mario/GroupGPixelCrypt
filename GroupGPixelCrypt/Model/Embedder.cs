@@ -48,6 +48,7 @@ public sealed class Embedder
         for (var y = 0; y < msgHeight; y++)
         {
             for (var x = 0; x < msgWidth; x++)
+>>>>>>> 29a97f9b8f88ec95f974e16c43839cda8e332ba9
             {
                 var srcIndex = y * srcWidth + x;
 

@@ -20,6 +20,13 @@ namespace GroupGPixelCrypt.Model.image
         public static PixelL1[] FromSoftwareBitmap(SoftwareBitmap source)
         {
             source = ImageManager.ConvertToCorrectFormat(source);
+<<<<<<< HEAD
+            PixelBgr8[] bgraPixels = PixelBgr8.FromSoftwareBitmap(source);
+            PixelL1[] result = new PixelL1[source.PixelWidth * source.PixelHeight]; 
+            for (int i = 0; i < bgraPixels.Length; i++)
+            {
+                result[i] = FromBgra8(bgraPixels[i]);
+=======
             byte[] sourcePixels = new byte[source.PixelWidth * source.PixelHeight * bgraChannels];
             PixelL1[] result = new PixelL1[source.PixelWidth * source.PixelHeight];
             source.CopyToBuffer(sourcePixels.AsBuffer());
@@ -31,12 +38,28 @@ namespace GroupGPixelCrypt.Model.image
                 byte red = sourcePixels[i * bgraChannels + 2];
                 float avg = (red + green + blue) / 3f;
                 result[i] = new PixelL1((byte)(avg >= 128 ? 1 : 0));
+>>>>>>> 29a97f9b8f88ec95f974e16c43839cda8e332ba9
             }
 
             return result;
         }
 
+<<<<<<< HEAD
+        /// <summary>
+        /// Turns a bgra8 pixel into a PixelL1.
+        /// </summary>
+        /// <param name="input">The input.</param>
+        /// <returns></returns>
+        public static PixelL1 FromBgra8(PixelBgr8 input)
+        {
+            float average = (input.Red + input.Green + input.Blue) / 3.0f;
+            return new PixelL1((byte)(average >= 128 ? 1 : 0));
+        }
+
+        public static byte[] ToByteArray(PixelL1[] pixelL1Array)
+=======
         public static byte[] ToByteArray(PixelL1[] pixels)
+>>>>>>> 29a97f9b8f88ec95f974e16c43839cda8e332ba9
         {
             byte[] result = new byte[pixels.Length];
             for (int i = 0; i < pixels.Length; i++)

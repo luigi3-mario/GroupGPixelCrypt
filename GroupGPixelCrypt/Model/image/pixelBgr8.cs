@@ -42,20 +42,27 @@ namespace GroupGPixelCrypt.Model.Image
             var result = new PixelBgr8[pixelCount];
             for (int i = 0; i < pixelCount; i++)
             {
-                result[i] = new PixelBgr8(
-                    raw[i * 4 + 0], // Blue
-                    raw[i * 4 + 1], // Green
-                    raw[i * 4 + 2], // Red
-                    raw[i * 4 + 3]  // Alpha
-                );
+                result[i] = singlePixelFromByteArray(sourcePixels, i);
             }
             return result;
         }
 
         /// <summary>
-        /// Writes an array of PixelBgr8 back into a SoftwareBitmap.
+        /// Singles the pixel from byte array.
         /// </summary>
-        public static SoftwareBitmap WriteToSoftwareBitmap(PixelBgr8[] pixels, SoftwareBitmap target)
+        /// <param name="sourcePixels">The source pixels.</param>
+        /// <param name="index">The index.</param>
+        /// <returns></returns>
+        public static PixelBgr8 singlePixelFromByteArray(byte[] sourcePixels, int index)
+        {
+            byte blue = sourcePixels[index * numberOfChannels];
+            byte green = sourcePixels[index * numberOfChannels + 1];
+            byte red = sourcePixels[index * numberOfChannels + 2];
+            byte alpha = sourcePixels[index * numberOfChannels + 3];
+            return new PixelBgr8(blue, green, red, alpha);
+        }
+
+        public static SoftwareBitmap WriteToSoftwareBitmap(PixelBgr8[] source, SoftwareBitmap original)
         {
             if (pixels.Length != target.PixelWidth * target.PixelHeight)
                 throw new ArgumentException("Pixel array size does not match bitmap dimensions.");
@@ -79,6 +86,11 @@ namespace GroupGPixelCrypt.Model.Image
                 raw[i * 4 + 3] = pixels[i].Alpha;
             }
             return raw;
+        }
+
+        public static PixelBgr8 whitePixel()
+        {
+            return new PixelBgr8(255, 255, 255, 255);
         }
     }
 }
