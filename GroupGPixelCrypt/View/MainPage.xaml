@@ -11,7 +11,7 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <!-- Source Image -->
+        <!-- Source Image Column -->
         <StackPanel Grid.Column="0" HorizontalAlignment="Center">
             <Border BorderBrush="Black" BorderThickness="1" Width="350" Height="350" Margin="0,0,0,10">
                 <Image x:Name="sourceImage" Stretch="Uniform"/>
@@ -19,21 +19,38 @@
             <Button Content="Open Source Image" Width="150" Click="OpenSourceImageButton_Click"/>
         </StackPanel>
 
-        <!-- Message Image -->
+        <!-- Message Input Column (Image only for embedding) -->
         <StackPanel Grid.Column="1" HorizontalAlignment="Center">
             <Border BorderBrush="Black" BorderThickness="1" Width="350" Height="350" Margin="0,0,0,10">
-                <Image x:Name="messageImage" Stretch="Uniform"/>
+                <Image x:Name="messageImage"
+                       Stretch="Uniform"
+                       Visibility="Collapsed"/>
             </Border>
-            <Button Content="Open Message Image" Width="150" Click="OpenMessageImageButton_Click"/>
-            <Button Content="Embed" Width="150" Margin="0,10,0,0" Click="EmbedButton_Click"/>
-            <Button Content="Extract" 
-                   Margin="0,0,0,0" Click="extractButton_Click"/>
+
+            <Button Content="Open Message File" Width="150"
+                    Click="OpenMessageFileButton_Click"/>
+
+            <Button Content="Embed" Width="150" Margin="0,10,0,0"
+                    Click="EmbedButton_Click"/>
+
+            <Button Content="Extract" Width="150"
+                    Click="ExtractButton_Click"/>
         </StackPanel>
 
-        <!-- Output Image -->
+        <!-- Output Column (Image OR Text after extraction) -->
         <StackPanel Grid.Column="2" HorizontalAlignment="Center">
             <Border BorderBrush="Black" BorderThickness="1" Width="350" Height="350" Margin="0,0,0,10">
-                <Image x:Name="targetImage" Stretch="Uniform"/>
+                <Grid>
+                    <!-- Output image -->
+                    <Image x:Name="targetImage" Stretch="Uniform" Visibility="Collapsed"/>
+
+                    <!-- Output text -->
+                    <ScrollViewer x:Name="messageScrollViewer" Visibility="Collapsed">
+                        <TextBlock x:Name="messageTextBlock"
+                                   TextWrapping="Wrap"
+                                   FontSize="18"/>
+                    </ScrollViewer>
+                </Grid>
             </Border>
             <Button Content="Save Output Image" Width="150" Click="SaveOutputButton_Click"/>
         </StackPanel>

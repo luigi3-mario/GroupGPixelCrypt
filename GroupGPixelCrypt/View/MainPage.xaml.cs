@@ -8,6 +8,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Imaging;
 using GroupGPixelCrypt.ViewModel;
+using GroupGPixelCrypt.Model.image; // needed for PixelBgr8
 
 namespace GroupGPixelCrypt
 {
@@ -40,13 +41,15 @@ namespace GroupGPixelCrypt
             }
         }
 
-        private async void OpenMessageImageButton_Click(object sender, RoutedEventArgs e)
+        private async void OpenMessageFileButton_Click(object sender, RoutedEventArgs e)
         {
             var file = await this.PickImageFile();
             if (file != null)
             {
                 await this.viewModel.LoadMessageImage(file);
                 await this.SetImageControl(this.messageImage, this.viewModel.MessageBitmap);
+                this.messageImage.Visibility = Visibility.Visible;
+                this.messageScrollViewer.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -67,24 +70,42 @@ namespace GroupGPixelCrypt
             }
         }
 
-        private async void extractButton_Click(object sender, RoutedEventArgs e)
+        private async void ExtractButton_Click(object sender, RoutedEventArgs e)
         {
             try
             {
                 if (this.viewModel.SourceBitmap == null)
-                {
                     return;
-                }
 
                 var extractor = new Extractor(this.viewModel.SourceBitmap);
 
-                var extractedBitmap = extractor.ExtractMessageBitmap();
+                if (!extractor.HasEmbeddedMessage())
+                {
+                    Debug.WriteLine("No embedded message found.");
+                    return;
+                }
 
-                this.viewModel.SetTargetBitmap(extractedBitmap);
+                // Read header from pixel 1 to decide type
+                var pixels = PixelBgr8.FromSoftwareBitmap(this.viewModel.SourceBitmap);
+                bool isText = (pixels[1].Blue & 0x01) == 1;
 
-                await this.SetImageControl(this.targetImage, extractedBitmap);
-
-                Debug.WriteLine("Extraction completed.");
+                if (isText)
+                {
+                    string extractedText = extractor.ExtractMessageText();
+                    this.messageTextBlock.Text = extractedText;
+                    this.messageScrollViewer.Visibility = Visibility.Visible;
+                    this.messageImage.Visibility = Visibility.Collapsed;
+                    Debug.WriteLine("Extracted text: " + extractedText);
+                }
+                else
+                {
+                    var extractedBitmap = extractor.ExtractMessageBitmap();
+                    this.viewModel.SetTargetBitmap(extractedBitmap);
+                    await this.SetImageControl(this.targetImage, extractedBitmap);
+                    this.messageScrollViewer.Visibility = Visibility.Collapsed;
+                    this.messageImage.Visibility = Visibility.Visible;
+                    Debug.WriteLine("Extraction completed (image).");
+                }
             }
             catch (Exception ex)
             {
@@ -95,9 +116,7 @@ namespace GroupGPixelCrypt
         private async void SaveOutputButton_Click(object sender, RoutedEventArgs e)
         {
             if (this.viewModel.TargetBitmap == null)
-            {
                 return;
-            }
 
             var picker = new FileSavePicker
             {
@@ -114,15 +133,10 @@ namespace GroupGPixelCrypt
                 {
                     BitmapEncoder encoder;
 
-                    // ✅ Choose encoder based on extension
                     if (file.FileType.ToLower() == ".bmp")
-                    {
                         encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.BmpEncoderId, stream);
-                    }
                     else
-                    {
                         encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
-                    }
 
                     encoder.SetSoftwareBitmap(this.viewModel.TargetBitmap);
                     await encoder.FlushAsync();
@@ -146,9 +160,7 @@ namespace GroupGPixelCrypt
         private async Task SetImageControl(Image control, SoftwareBitmap bitmap)
         {
             if (bitmap == null)
-            {
                 return;
-            }
 
             if (bitmap.BitmapPixelFormat != BitmapPixelFormat.Bgra8 ||
                 bitmap.BitmapAlphaMode == BitmapAlphaMode.Straight)
