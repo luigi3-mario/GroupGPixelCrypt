@@ -5,7 +5,7 @@ using Windows.Graphics.Imaging;
 using Windows.Storage;
 using Windows.Storage.Streams;
 
-namespace GroupGPixelCrypt.Model
+namespace GroupGPixelCrypt.Model.image
 {
     public class ImageManager
     {

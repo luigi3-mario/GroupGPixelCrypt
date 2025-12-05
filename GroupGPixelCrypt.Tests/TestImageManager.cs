@@ -1,7 +1,5 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using GroupGPixelCrypt.Model;
-using System.Text;
 using Windows.Storage;
 using GroupGPixelCrypt.Model.image;
 

@@ -119,7 +119,10 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Model\Embedder.cs" />
+    <Compile Include="Embedders\ImageEmbedder.cs" />
+    <Compile Include="Embedders\TextEmbedder.cs" />
+    <Compile Include="Extractors\ImageExtractor.cs" />
+    <Compile Include="Extractors\TextExtractor.cs" />
     <Compile Include="Model\Extractor.cs" />
     <Compile Include="Model\image\HiddenImageManager.cs" />
     <Compile Include="Model\image\ImageManager.cs" />

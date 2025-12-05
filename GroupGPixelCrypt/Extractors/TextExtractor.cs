@@ -6,19 +6,15 @@ using GroupGPixelCrypt.Model.image;
 
 namespace GroupGPixelCrypt.Model
 {
-    public sealed class Extractor
+    public sealed class TextExtractor
     {
         private readonly SoftwareBitmap embeddedImage;
 
-        public Extractor(SoftwareBitmap embeddedImage)
+        public TextExtractor(SoftwareBitmap embeddedImage)
         {
-            if (embeddedImage == null)
-                throw new ArgumentNullException(nameof(embeddedImage));
-
-            this.embeddedImage = ImageManager.ConvertToCorrectFormat(embeddedImage);
+            this.embeddedImage = ImageManager.ConvertToCorrectFormat(embeddedImage ?? throw new ArgumentNullException(nameof(embeddedImage)));
         }
 
-        // Pixel 0 must be (123,123,123)
         public bool HasEmbeddedMessage()
         {
             var pixels = PixelBgr8.FromSoftwareBitmap(this.embeddedImage);
@@ -28,31 +24,6 @@ namespace GroupGPixelCrypt.Model
             return marker.Red == 123 && marker.Green == 123 && marker.Blue == 123;
         }
 
-        // Image messages: read blue LSB for every pixel; output monochrome full-size
-        public SoftwareBitmap ExtractMessageBitmap()
-        {
-            var pixels = PixelBgr8.FromSoftwareBitmap(this.embeddedImage);
-            if (pixels.Length == 0)
-                throw new InvalidOperationException("Image is empty.");
-
-            var marker = pixels[0];
-            if (marker.Red != 123 || marker.Green != 123 || marker.Blue != 123)
-                throw new InvalidOperationException("No embedded message found (marker pixel missing).");
-
-            var width = this.embeddedImage.PixelWidth;
-            var height = this.embeddedImage.PixelHeight;
-
-            var resultPixels = new PixelL1[pixels.Length];
-            for (var i = 0; i < pixels.Length; i++)
-            {
-                var bit = (byte)(pixels[i].Blue & 0x01);
-                resultPixels[i] = new PixelL1(bit);
-            }
-
-            return PixelL1.ToSoftwareBitmap(resultPixels, width, height);
-        }
-
-        // Text messages: respect BPCC in header (pixel 1), MSB-first within bpcc chunk; stop at 0 terminator
         public string ExtractMessageText()
         {
             var pixels = PixelBgr8.FromSoftwareBitmap(this.embeddedImage);
@@ -64,9 +35,6 @@ namespace GroupGPixelCrypt.Model
                 throw new InvalidOperationException("No embedded message found (marker pixel missing).");
 
             // Header (pixel 1):
-            // - Red LSB: encryption flag (ignored)
-            // - Green: BPCC (1..8)
-            // - Blue LSB: 1=text, 0=image
             var bpcc = Math.Max(1, Math.Min(8, (int)pixels[1].Green));
             var isText = (pixels[1].Blue & 0x01) == 1;
             if (!isText)
@@ -96,7 +64,6 @@ namespace GroupGPixelCrypt.Model
             return sb.ToString();
         }
 
-        // Helper: append lower bpcc bits MSB-first
         private static void AppendLowerBitsMsbFirst(byte channel, int bpcc, List<int> bitStream)
         {
             for (int i = bpcc - 1; i >= 0; i--)

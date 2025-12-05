@@ -1,5 +1,5 @@
 ﻿<Page
-    x:Class="GroupGPixelCrypt.MainPage"
+    x:Class="GroupGPixelCrypt.View.MainPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
@@ -9,6 +9,8 @@
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+            <!-- Fourth column -->
         </Grid.ColumnDefinitions>
 
         <!-- Source Image Column -->
@@ -19,12 +21,22 @@
             <Button Content="Open Source Image" Width="150" Click="OpenSourceImageButton_Click"/>
         </StackPanel>
 
-        <!-- Message Input Column (Image only for embedding) -->
+        <!-- Message Input Column (Image OR Text for embedding) -->
         <StackPanel Grid.Column="1" HorizontalAlignment="Center">
             <Border BorderBrush="Black" BorderThickness="1" Width="350" Height="350" Margin="0,0,0,10">
-                <Image x:Name="messageImage"
-                       Stretch="Uniform"
-                       Visibility="Collapsed"/>
+                <Grid>
+                    <!-- Message image preview -->
+                    <Image x:Name="messageImage"
+                           Stretch="Uniform"
+                           Visibility="Collapsed"/>
+
+                    <!-- Message text preview -->
+                    <ScrollViewer x:Name="messagePreviewScrollViewer" Visibility="Collapsed">
+                        <TextBlock x:Name="messagePreviewTextBlock"
+                                   TextWrapping="Wrap"
+                                   FontSize="18"/>
+                    </ScrollViewer>
+                </Grid>
             </Border>
 
             <Button Content="Open Message File" Width="150"
@@ -42,10 +54,10 @@
             <Border BorderBrush="Black" BorderThickness="1" Width="350" Height="350" Margin="0,0,0,10">
                 <Grid>
                     <!-- Output image -->
-                    <Image x:Name="targetImage" Stretch="Uniform" Visibility="Collapsed"/>
+                    <Image x:Name="targetImage" Stretch="Uniform" Visibility="Visible"/>
 
                     <!-- Output text -->
-                    <ScrollViewer x:Name="messageScrollViewer" Visibility="Collapsed">
+                    <ScrollViewer x:Name="messageScrollViewer" Visibility="Visible">
                         <TextBlock x:Name="messageTextBlock"
                                    TextWrapping="Wrap"
                                    FontSize="18"/>
@@ -53,6 +65,26 @@
                 </Grid>
             </Border>
             <Button Content="Save Output Image" Width="150" Click="SaveOutputButton_Click"/>
+        </StackPanel>
+
+        <!-- Encrypted Output Column -->
+        <StackPanel Grid.Column="3" HorizontalAlignment="Center">
+            <Border BorderBrush="Black" BorderThickness="1" Width="350" Height="350" Margin="0,0,0,10">
+                <Grid>
+                    <!-- Encrypted output preview -->
+                    <ScrollViewer>
+                        <TextBlock x:Name="encryptedOutputTextBlock"
+                                   TextWrapping="Wrap"
+                                   FontSize="18" x:FieldModifier="public" />
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <!-- Radio buttons for encryption mode -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
+                <RadioButton x:Name="unencryptedRadioButton" Content="Unencrypted" GroupName="CryptoMode" IsChecked="True"/>
+                <RadioButton x:Name="encryptedRadioButton" Content="Encrypted" GroupName="CryptoMode" Margin="20,0,0,0"/>
+            </StackPanel>
         </StackPanel>
     </Grid>
 </Page>

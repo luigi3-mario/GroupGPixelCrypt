@@ -3,6 +3,7 @@ using System;
 using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
+using GroupGPixelCrypt.Model.image;
 
 namespace GroupGPixelCrypt.ViewModel
 {
@@ -21,7 +22,7 @@ namespace GroupGPixelCrypt.ViewModel
             if (file != null)
             {
                 var manager = await ImageManager.FromImageFile(file);
-                SourceBitmap = manager.SoftwareBitmap;
+                this.SourceBitmap = manager.SoftwareBitmap;
             }
         }
 
@@ -30,43 +31,29 @@ namespace GroupGPixelCrypt.ViewModel
             if (file != null)
             {
                 var manager = await ImageManager.FromImageFile(file);
-                MessageBitmap = manager.SoftwareBitmap;
+                this.MessageBitmap = manager.SoftwareBitmap;
+                this.MessageText = null; // clear text if image is loaded
+            }
+        }
+
+        public async Task LoadMessageText(StorageFile file)
+        {
+            if (file != null)
+            {
+                this.MessageText = await FileIO.ReadTextAsync(file);
+                this.MessageBitmap = null; // clear image if text is loaded
             }
         }
 
         public void SetTargetBitmap(SoftwareBitmap bitmap)
         {
-            TargetBitmap = bitmap;
+            this.TargetBitmap = bitmap;
         }
 
-        public void EmbedMessage()
-        {
-            if (SourceBitmap == null) return;
+        
 
-            if (MessageBitmap != null)
-            {
-                var embedder = new Embedder(MessageBitmap, SourceBitmap);
-                TargetBitmap = embedder.EmbedMessage();
-            }
-            else if (!string.IsNullOrEmpty(MessageText))
-            {
-                var embedder = new Embedder(MessageText, SourceBitmap, BitsPerChannel, EncryptionUsed);
-                TargetBitmap = embedder.EmbedMessage();
-            }
-        }
+       
 
-        public SoftwareBitmap ExtractImageFromSource()
-        {
-            if (SourceBitmap == null) return null;
-            var extractor = new Extractor(SourceBitmap);
-            return extractor.ExtractMessageBitmap();
-        }
-
-        public string ExtractTextFromSource()
-        {
-            if (SourceBitmap == null) return null;
-            var extractor = new Extractor(SourceBitmap);
-            return extractor.ExtractMessageText();
-        }
+        
     }
 }
