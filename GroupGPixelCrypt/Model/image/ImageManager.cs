@@ -30,6 +30,7 @@ namespace GroupGPixelCrypt.Model.image
 
         public static SoftwareBitmap ConvertToCorrectFormat(SoftwareBitmap softwareBitmap)
         {
+
             if (softwareBitmap.BitmapPixelFormat != BitmapPixelFormat.Bgra8 ||
                 softwareBitmap.BitmapAlphaMode == BitmapAlphaMode.Straight)
             {

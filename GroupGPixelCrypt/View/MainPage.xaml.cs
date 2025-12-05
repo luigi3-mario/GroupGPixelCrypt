@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
@@ -8,6 +7,8 @@ using Windows.Storage.Pickers;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Imaging;
+using GroupGPixelCrypt.Embedders;
+using GroupGPixelCrypt.Encrypters;
 using GroupGPixelCrypt.Model;
 using GroupGPixelCrypt.Model.image;
 using GroupGPixelCrypt.ViewModel;
@@ -83,57 +84,79 @@ namespace GroupGPixelCrypt.View
             try
             {
                 if (this.viewModel.SourceBitmap == null)
-                {
                     return;
-                }
 
-                // Set encryption flag based on radio buttons
                 this.viewModel.EncryptionUsed = this.encryptedRadioButton.IsChecked == true;
 
                 if (this.viewModel.MessageBitmap != null)
                 {
-                    // Image embedding (with optional quadrant-swap encryption)
-                    var embedder = new ImageEmbedder(
-                        this.viewModel.MessageBitmap,
-                        this.viewModel.SourceBitmap,
-                        this.viewModel.EncryptionUsed);
+                    // Step 1: Embed message image into source
+                    var embedder = new ImageEmbedder(this.viewModel.MessageBitmap, this.viewModel.SourceBitmap);
+                    var embeddedBitmap = embedder.EmbedMessage();
+                    this.viewModel.SetTargetBitmap(embeddedBitmap);
 
-                    this.viewModel.SetTargetBitmap(embedder.EmbedMessage());
+                    // Show embedded image in Output grid
+                    await this.setImageControl(this.targetImage, embeddedBitmap);
+                    this.targetImage.Visibility = Visibility.Visible;
+                    this.messageScrollViewer.Visibility = Visibility.Collapsed;
 
-                    this.encryptedOutputTextBlock.Text = this.viewModel.EncryptionUsed
-                        ? "Image message encrypted via quadrant swap and embedded."
-                        : "Image message embedded without encryption.";
+                    // Step 2: If encryption is selected, encrypt the embedded image
+                    if (this.viewModel.EncryptionUsed)
+                    {
+                        Debug.WriteLine($"[Embed] embeddedBitmap is {(embeddedBitmap == null ? "NULL" : "OK")}.");
+                        if (embeddedBitmap != null)
+                        {
+                            Debug.WriteLine(
+                                $"[Embed] Size: {embeddedBitmap.PixelWidth}x{embeddedBitmap.PixelHeight}, Format={embeddedBitmap.BitmapPixelFormat}, Alpha={embeddedBitmap.BitmapAlphaMode}");
+                        }
+
+                        // Use PixelBgr8 to preserve color
+                        var pixels = PixelBgr8.FromSoftwareBitmap(embeddedBitmap);
+                        var encryptedPixels = ImageEncrypter.EncryptQuadrants(
+                            pixels,
+                            embeddedBitmap.PixelWidth,
+                            embeddedBitmap.PixelHeight
+                        );
+
+                        // Rebuild a full-color SoftwareBitmap
+                        var encryptedBitmap = new SoftwareBitmap(BitmapPixelFormat.Bgra8,
+                            embeddedBitmap.PixelWidth,
+                            embeddedBitmap.PixelHeight,
+                            BitmapAlphaMode.Premultiplied);
+
+                        PixelBgr8.WriteToSoftwareBitmap(encryptedPixels, encryptedBitmap);
+
+                        // Show in encrypted output column
+                        await this.setImageControl(this.encryptedOutputImage, encryptedBitmap);
+                        this.encryptedOutputImage.Visibility = Visibility.Visible;
+                        Debug.WriteLine(
+                            $"[Encrypt] encryptedOutputImage.Source is {(this.encryptedOutputImage.Source == null ? "NULL" : "SET")}");
+
+                        // Optionally promote to TargetBitmap if you want Save/Extract to use encrypted
+                        this.viewModel.SetTargetBitmap(encryptedBitmap);
+                    }
+
                 }
                 else if (!string.IsNullOrEmpty(this.viewModel.MessageText))
                 {
-                    // Text embedding
+                    // Text embedding path (unchanged)
                     var bpcc = await this.askBitsPerChannelAsync();
                     this.viewModel.BitsPerChannel = bpcc;
 
-                    var embedder = new TextEmbedder(
-                        this.viewModel.MessageText,
-                        this.viewModel.SourceBitmap,
-                        this.viewModel.BitsPerChannel,
-                        this.viewModel.EncryptionUsed);
+                    var embedder = new TextEmbedder(this.viewModel.MessageText, this.viewModel.SourceBitmap,
+                        this.viewModel.BitsPerChannel, this.viewModel.EncryptionUsed
+                    );
 
-                    this.viewModel.SetTargetBitmap(embedder.EmbedMessage());
+                    var embeddedBitmap = embedder.EmbedMessage();
+                    this.viewModel.SetTargetBitmap(embeddedBitmap);
 
-                    this.encryptedOutputTextBlock.Text = $"Text embedded (BPCC={this.viewModel.BitsPerChannel}). " +
-                        (this.viewModel.EncryptionUsed ? "Encryption flag set in header." : "No encryption.");
+                    await this.setImageControl(this.targetImage, embeddedBitmap);
+                    this.targetImage.Visibility = Visibility.Visible;
+                    this.messageScrollViewer.Visibility = Visibility.Collapsed;
                 }
                 else
                 {
                     Debug.WriteLine("No message selected. Load an image or a text file.");
-                }
-
-                if (this.viewModel.TargetBitmap != null)
-                {
-                    await this.setImageControl(this.targetImage, this.viewModel.TargetBitmap);
-
-                    this.targetImage.Visibility = Visibility.Visible;
-                    this.messageScrollViewer.Visibility = Visibility.Collapsed;
-
-                    Debug.WriteLine("Message embedded successfully.");
                 }
             }
             catch (Exception ex)
@@ -141,6 +164,7 @@ namespace GroupGPixelCrypt.View
                 Debug.WriteLine($"Embedding failed: {ex.Message}");
             }
         }
+
 
         private async void ExtractButton_Click(object sender, RoutedEventArgs e)
         {
@@ -155,7 +179,7 @@ namespace GroupGPixelCrypt.View
                 }
 
                 // Optional: log header to confirm flags
-                LogHeader(bitmapToExtract);
+                this.LogHeader(bitmapToExtract);
 
                 var pixels = PixelBgr8.FromSoftwareBitmap(bitmapToExtract);
                 var isText = (pixels[1].Blue & 0x01) == 1;
@@ -177,9 +201,6 @@ namespace GroupGPixelCrypt.View
                     this.targetImage.Visibility = Visibility.Collapsed;
 
                     var encryptionFlag = (pixels[1].Red & 0x01) == 1;
-                    this.encryptedOutputTextBlock.Text = encryptionFlag
-                        ? "Header indicates encryption flag was set."
-                        : "Header indicates encryption flag was not set.";
 
                     Debug.WriteLine("Extracted text: " + extractedText);
                 }
@@ -201,9 +222,6 @@ namespace GroupGPixelCrypt.View
                     this.targetImage.Visibility = Visibility.Visible;
 
                     var encryptionFlag = (pixels[1].Red & 0x01) == 1;
-                    this.encryptedOutputTextBlock.Text = encryptionFlag
-                        ? "Extracted image appears encrypted (quadrant swap)."
-                        : "Extracted image appears unencrypted.";
 
                     Debug.WriteLine("Extraction completed (image).");
                 }
@@ -282,23 +300,32 @@ namespace GroupGPixelCrypt.View
 
         private async Task setImageControl(Image control, SoftwareBitmap bitmap)
         {
-            if (bitmap == null)
-            {
-                return;
-            }
+            if (control == null) { Debug.WriteLine("[setImageControl] control is NULL"); return; }
+            if (bitmap == null) { Debug.WriteLine("[setImageControl] bitmap is NULL"); return; }
 
-            if (bitmap.BitmapPixelFormat != BitmapPixelFormat.Bgra8 ||
-                bitmap.BitmapAlphaMode == BitmapAlphaMode.Straight)
+            try
             {
-                bitmap = SoftwareBitmap.Convert(bitmap,
-                    BitmapPixelFormat.Bgra8,
-                    BitmapAlphaMode.Premultiplied);
-            }
+                if (bitmap.BitmapPixelFormat != BitmapPixelFormat.Bgra8 ||
+                    bitmap.BitmapAlphaMode == BitmapAlphaMode.Straight)
+                {
+                    bitmap = SoftwareBitmap.Convert(bitmap,
+                        BitmapPixelFormat.Bgra8,
+                        BitmapAlphaMode.Premultiplied);
+                    Debug.WriteLine("[setImageControl] Converted bitmap to BGRA8 Premultiplied.");
+                }
 
-            var source = new SoftwareBitmapSource();
-            await source.SetBitmapAsync(bitmap);
-            control.Source = source;
+                var source = new SoftwareBitmapSource();
+                await source.SetBitmapAsync(bitmap);
+                control.Source = source;
+
+                Debug.WriteLine("[setImageControl] Image set successfully.");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[setImageControl] Failed: {ex.Message}");
+            }
         }
+
 
         /// <summary>
         ///     Popup dialog to select BPCC (1–8).
@@ -348,7 +375,7 @@ namespace GroupGPixelCrypt.View
                 }
 
                 Debug.WriteLine($"P0: R{p[0].Red} G{p[0].Green} B{p[0].Blue}");
-                Debug.WriteLine($"P1: R{p[1].Red} G{p[1].Green} B{p[1].Blue} | BlueLSB={(p[1].Blue & 1)}");
+                Debug.WriteLine($"P1: R{p[1].Red} G{p[1].Green} B{p[1].Blue} | BlueLSB={p[1].Blue & 1}");
             }
             catch (Exception ex)
             {

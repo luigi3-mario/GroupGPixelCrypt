@@ -123,11 +123,11 @@
     <Compile Include="Embedders\TextEmbedder.cs" />
     <Compile Include="Extractors\ImageExtractor.cs" />
     <Compile Include="Extractors\TextExtractor.cs" />
-    <Compile Include="Model\Extractor.cs" />
+    <Compile Include="Encrypters\ImageEncrypter.cs" />
     <Compile Include="Model\image\HiddenImageManager.cs" />
     <Compile Include="Model\image\ImageManager.cs" />
-    <Compile Include="Model\image\pixelBgr8.cs" />
-    <Compile Include="Model\image\pixelL1.cs" />
+    <Compile Include="Model\image\PixelBgr8.cs" />
+    <Compile Include="Model\image\PixelL1.cs" />
     <Compile Include="Model\ListExtensions.cs" />
     <Compile Include="Model\Mask.cs" />
     <Compile Include="Model\Mode.cs" />

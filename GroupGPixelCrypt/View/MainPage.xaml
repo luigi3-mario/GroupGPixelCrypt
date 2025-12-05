@@ -15,15 +15,25 @@
 
         <!-- Source Image Column -->
         <StackPanel Grid.Column="0" HorizontalAlignment="Center">
-            <Border BorderBrush="Black" BorderThickness="1" Width="350" Height="350" Margin="0,0,0,10">
+            <Border BorderBrush="Black"
+                    BorderThickness="1"
+                    Width="350"
+                    Height="350"
+                    Margin="0,0,0,10">
                 <Image x:Name="sourceImage" Stretch="Uniform"/>
             </Border>
-            <Button Content="Open Source Image" Width="150" Click="OpenSourceImageButton_Click"/>
+            <Button Content="Open Source Image"
+                    Width="150"
+                    Click="OpenSourceImageButton_Click"/>
         </StackPanel>
 
         <!-- Message Input Column (Image OR Text for embedding) -->
         <StackPanel Grid.Column="1" HorizontalAlignment="Center">
-            <Border BorderBrush="Black" BorderThickness="1" Width="350" Height="350" Margin="0,0,0,10">
+            <Border BorderBrush="Black"
+                    BorderThickness="1"
+                    Width="350"
+                    Height="350"
+                    Margin="0,0,0,10">
                 <Grid>
                     <!-- Message image preview -->
                     <Image x:Name="messageImage"
@@ -31,7 +41,8 @@
                            Visibility="Collapsed"/>
 
                     <!-- Message text preview -->
-                    <ScrollViewer x:Name="messagePreviewScrollViewer" Visibility="Collapsed">
+                    <ScrollViewer x:Name="messagePreviewScrollViewer"
+                                  Visibility="Collapsed">
                         <TextBlock x:Name="messagePreviewTextBlock"
                                    TextWrapping="Wrap"
                                    FontSize="18"/>
@@ -39,52 +50,76 @@
                 </Grid>
             </Border>
 
-            <Button Content="Open Message File" Width="150"
+            <Button Content="Open Message File"
+                    Width="150"
                     Click="OpenMessageFileButton_Click"/>
 
-            <Button Content="Embed" Width="150" Margin="0,10,0,0"
+            <Button Content="Embed"
+                    Width="150"
+                    Margin="0,10,0,0"
                     Click="EmbedButton_Click"/>
 
-            <Button Content="Extract" Width="150"
+            <Button Content="Extract"
+                    Width="150"
                     Click="ExtractButton_Click"/>
         </StackPanel>
 
         <!-- Output Column (Image OR Text after extraction) -->
         <StackPanel Grid.Column="2" HorizontalAlignment="Center">
-            <Border BorderBrush="Black" BorderThickness="1" Width="350" Height="350" Margin="0,0,0,10">
+            <Border BorderBrush="Black"
+                    BorderThickness="1"
+                    Width="350"
+                    Height="350"
+                    Margin="0,0,0,10">
                 <Grid>
                     <!-- Output image -->
-                    <Image x:Name="targetImage" Stretch="Uniform" Visibility="Visible"/>
+                    <Image x:Name="targetImage"
+                           Stretch="Uniform"
+                           Visibility="Visible"/>
 
                     <!-- Output text -->
-                    <ScrollViewer x:Name="messageScrollViewer" Visibility="Visible">
+                    <ScrollViewer x:Name="messageScrollViewer"
+                                  Visibility="Visible">
                         <TextBlock x:Name="messageTextBlock"
                                    TextWrapping="Wrap"
                                    FontSize="18"/>
                     </ScrollViewer>
                 </Grid>
             </Border>
-            <Button Content="Save Output Image" Width="150" Click="SaveOutputButton_Click"/>
+            <Button Content="Save Output Image"
+                    Width="150"
+                    Click="SaveOutputButton_Click"/>
         </StackPanel>
 
         <!-- Encrypted Output Column -->
         <StackPanel Grid.Column="3" HorizontalAlignment="Center">
-            <Border BorderBrush="Black" BorderThickness="1" Width="350" Height="350" Margin="0,0,0,10">
-                <Grid>
-                    <!-- Encrypted output preview -->
-                    <ScrollViewer>
-                        <TextBlock x:Name="encryptedOutputTextBlock"
-                                   TextWrapping="Wrap"
-                                   FontSize="18" x:FieldModifier="public" />
-                    </ScrollViewer>
-                </Grid>
+            <Border BorderBrush="Black"
+                    BorderThickness="1"
+                    Width="350"
+                    Height="350"
+                    Margin="0,0,0,10">
+                <!-- Encrypted output image fills the border -->
+                <Image x:Name="encryptedOutputImage"
+                       Stretch="Uniform"
+                       Visibility="Collapsed"
+                       Width="350"
+                       Height="350"/>
             </Border>
 
             <!-- Radio buttons for encryption mode -->
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
-                <RadioButton x:Name="unencryptedRadioButton" Content="Unencrypted" GroupName="CryptoMode" IsChecked="True"/>
-                <RadioButton x:Name="encryptedRadioButton" Content="Encrypted" GroupName="CryptoMode" Margin="20,0,0,0"/>
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        Margin="0,10,0,0">
+                <RadioButton x:Name="unencryptedRadioButton"
+                             Content="Unencrypted"
+                             GroupName="CryptoMode"
+                             IsChecked="True"/>
+                <RadioButton x:Name="encryptedRadioButton"
+                             Content="Encrypted"
+                             GroupName="CryptoMode"
+                             Margin="20,0,0,0"/>
             </StackPanel>
         </StackPanel>
+
     </Grid>
 </Page>
