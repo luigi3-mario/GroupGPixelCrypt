@@ -1,36 +1,28 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.ServiceModel.Channels;
-using System.Text;
-using System.Threading.Tasks;
-using Windows.Graphics.Imaging;
 
-namespace GroupGPixelCrypt.Model
+namespace GroupGPixelCrypt.Model.text
 {
     public class TextManager
     {
         #region Data members
 
+<<<<<<< HEAD
         private string message;
         private char cipherChar;
         private char messageChar;
+=======
+>>>>>>> f9088511ec8202dfa11ee13c0b476e53e6bc4ef6
         private const int CharLength = 8;
         private const int ByteLength = 8;
 
         #endregion
 
-        #region Properties
+        #region Methods
 
-        #endregion
-
-        #region Constructors        
-        /// <summary>
-        /// Initializes a new instance of the <see cref="TextManager"/> class.
-        /// </summary>
-        public TextManager()
+        public IList<byte> GetMessage(string message, int bitsPerChannel)
         {
+<<<<<<< HEAD
         }
 
         #endregion
@@ -43,42 +35,57 @@ namespace GroupGPixelCrypt.Model
         /// <param name="bitsPerChannel">The bits per channel.</param>
         /// <returns>The bytes for the encoder to encode</returns>
         public IList<byte> ConvertMessageToBytes(String message, int bitsPerChannel)
-        {
-            string messageWithTerminator = message + "#-.-#";
-            return this.BreakDownText(messageWithTerminator, bitsPerChannel);
+=======
+            var messageWithTerminator = appendTerminator(message);
+            return this.breakDownText(messageWithTerminator, bitsPerChannel);
         }
 
-        private IList<byte> BreakDownText(String message, int bitsPerChannel)
+        private static string appendTerminator(string message)
+>>>>>>> f9088511ec8202dfa11ee13c0b476e53e6bc4ef6
         {
-            IList<byte> brokenDownChar;
-            List<byte> result = new List<byte>();//We may not use IList here because we need to use AddRange
-            foreach (char messageChar in message.ToCharArray())
+            return message + "#-.-#";
+        }
+
+<<<<<<< HEAD
+        private IList<byte> BreakDownText(String message, int bitsPerChannel)
+=======
+        private IList<byte> breakDownText(string message, int bitsPerChannel)
+>>>>>>> f9088511ec8202dfa11ee13c0b476e53e6bc4ef6
+        {
+            var result = new List<byte>();
+            foreach (var messageChar in message)
             {
-                brokenDownChar = this.breakDownChar(messageChar);
+                var brokenDownChar = this.breakDownChar(messageChar);
                 result.AddRange(brokenDownChar);
             }
 
             return this.combineBits(result, bitsPerChannel);
         }
+
         private IList<byte> breakDownChar(char input)
         {
-            byte maskOneBit = getMask(1);
-            byte nextValue;
-            IList<byte> result = new List<byte>();
-            for (int i = 0; i < CharLength; i++)
+            var maskOneBit = GetMask(1);
+            var result = new List<byte>();
+            for (var i = 0; i < CharLength; i++)
             {
-                nextValue = (byte)((input << i) & maskOneBit);
-                result.Add(nextValue);
+                result.Add(shiftAndMaskChar(input, i, maskOneBit));
             }
+
             return result;
+        }
+
+        private static byte shiftAndMaskChar(char input, int shift, byte mask)
+        {
+            return (byte)((input << shift) & mask);
         }
 
         private IList<byte> combineBits(IList<byte> bits, int bitsPerChannel)
         {
-            ICollection<IList<byte>> chunks = bits.ChunkBy(bitsPerChannel);
-            List<byte> result = new List<byte>();
-            foreach (IList<byte> chunk in chunks)
+            var chunks = bits.ChunkBy(bitsPerChannel);
+            var result = new List<byte>();
+            foreach (var chunk in chunks)
             {
+<<<<<<< HEAD
                 byte combinedByte = 0;
                 for (int i = 0; i < chunk.Count; i++)
                 {
@@ -86,11 +93,15 @@ namespace GroupGPixelCrypt.Model
                 }
 
                 result.Add(combinedByte);
+=======
+                result.Add(combineChunk(chunk, bitsPerChannel));
+>>>>>>> f9088511ec8202dfa11ee13c0b476e53e6bc4ef6
             }
 
             return result;
         }
 
+<<<<<<< HEAD
         private char decryptChar(string cipher, string message, int index)
         {
             this.setupChars(cipher, message, index);
@@ -152,27 +163,32 @@ namespace GroupGPixelCrypt.Model
         }
 
         public static byte getMask(int bitsPerChannel)
+=======
+        private static byte combineChunk(IList<byte> chunk, int bitsPerChannel)
+        {
+            byte combinedByte = 0;
+            for (var i = 0; i < chunk.Count; i++)
+            {
+                combinedByte |= (byte)(chunk[i] >> (ByteLength - bitsPerChannel + i));
+            }
+
+            return combinedByte;
+        }
+
+        public static byte GetMask(int bitsPerChannel)
+>>>>>>> f9088511ec8202dfa11ee13c0b476e53e6bc4ef6
         {
             switch (bitsPerChannel)
             {
-                case 1:
-                    return 0xff;
-                case 2:
-                    return 0x7f;
-                case 3:
-                    return 0x3f;
-                case 4:
-                    return 0x1f;
-                case 5:
-                    return 0x0f;
-                case 6:
-                    return 0x07;
-                case 7:
-                    return 0x03;
-                case 8:
-                    return 0x01;
-                default:
-                    throw new ArgumentException("bitsPerChannel must be between 1 and 8");
+                case 1: return 0xff;
+                case 2: return 0x7f;
+                case 3: return 0x3f;
+                case 4: return 0x1f;
+                case 5: return 0x0f;
+                case 6: return 0x07;
+                case 7: return 0x03;
+                case 8: return 0x01;
+                default: throw new ArgumentException("bitsPerChannel must be between 1 and 8");
             }
         }
 

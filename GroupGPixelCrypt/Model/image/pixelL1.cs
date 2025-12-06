@@ -1,81 +1,124 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
-using System.Text;
-using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
 
 namespace GroupGPixelCrypt.Model.image
 {
     public class PixelL1
     {
-        private static int bgraChannels = 4;
+        #region Properties
 
-        /// <summary>
-        /// Gets or sets the channels.
-        /// </summary>
-        /// <value>
-        /// The channels.
-        /// </value>
         public byte Luma { get; }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PixelL1"/> class.
-        /// </summary>
-        /// <param name="value">The value.</param>
+        #endregion
+
+        #region Constructors
+
         public PixelL1(byte value)
         {
-            if (value > 1 || value < 0)
+            if (value > 1)
             {
                 throw new ArgumentException("Can only be 0 or 1");
             }
+
             this.Luma = value;
         }
 
-        /// <summary>
-        /// Takes in a SoftwareBitmap and converts it to an array of PixelL1.
-        /// </summary>
-        /// <param name="source">The source.</param>
-        /// <returns></returns>
+        #endregion
+
+        #region Methods
+
         public static PixelL1[] FromSoftwareBitmap(SoftwareBitmap source)
         {
-            source = ImageManager.ConvertToCorrectFormat(source);
-            PixelBgr8[] bgraPixels = PixelBgr8.FromSoftwareBitmap(source);
-            PixelL1[] result = new PixelL1[source.PixelWidth * source.PixelHeight]; 
-            for (int i = 0; i < bgraPixels.Length; i++)
+            if (source == null)
             {
-                result[i] = FromBgra8(bgraPixels[i]);
+                throw new ArgumentNullException(nameof(source));
             }
+
+            if (source.BitmapPixelFormat != BitmapPixelFormat.Bgra8 ||
+                source.BitmapAlphaMode != BitmapAlphaMode.Premultiplied)
+            {
+                source = SoftwareBitmap.Convert(source, BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
+            }
+
+            var width = source.PixelWidth;
+            var height = source.PixelHeight;
+            var result = new PixelL1[width * height];
+
+            var raw = new byte[height * width * 4];
+            source.CopyToBuffer(raw.AsBuffer());
+
+            var stride = width * 4;
+
+            for (var y = 0; y < height; y++)
+            {
+                for (var x = 0; x < width; x++)
+                {
+                    var idx = getIndex(x, y, stride);
+                    var blue = raw[idx + 0];
+                    var green = raw[idx + 1];
+                    var red = raw[idx + 2];
+                    var average = calculateAverage(red, green, blue);
+                    result[y * width + x] = createPixelFromAverage(average);
+                }
+            }
+
             return result;
         }
 
-        /// <summary>
-        /// Turns a bgra8 pixel into a PixelL1.
-        /// </summary>
-        /// <param name="input">The input.</param>
-        /// <returns></returns>
-        public static PixelL1 FromBgra8(PixelBgr8 input)
+        public static SoftwareBitmap ToSoftwareBitmap(PixelL1[] pixels, int width, int height)
         {
-            float average = (input.Red + input.Green + input.Blue) / 3.0f;
+            if (pixels.Length != width * height)
+            {
+                throw new ArgumentException("Pixel array length does not match dimensions.");
+            }
+
+            var bitmap = new SoftwareBitmap(BitmapPixelFormat.Bgra8, width, height, BitmapAlphaMode.Premultiplied);
+            var buffer = new byte[width * height * 4];
+
+            for (var i = 0; i < pixels.Length; i++)
+            {
+                writePixelToBuffer(pixels[i], buffer, i * 4);
+            }
+
+            bitmap.CopyFromBuffer(buffer.AsBuffer());
+            return bitmap;
+        }
+
+        private static int getIndex(int x, int y, int stride)
+        {
+            return y * stride + x * 4;
+        }
+
+        private static float calculateAverage(byte red, byte green, byte blue)
+        {
+            return (red + green + blue) / 3.0f;
+        }
+
+        private static PixelL1 createPixelFromAverage(float average)
+        {
             return new PixelL1((byte)(average >= 128 ? 1 : 0));
         }
 
+<<<<<<< HEAD
         /// <summary>
         /// Converts to bytearray.
         /// </summary>
         /// <param name="pixelL1Array">The pixel l1 array.</param>
         /// <returns></returns>
         public static byte[] ToByteArray(PixelL1[] pixelL1Array)
+=======
+        private static void writePixelToBuffer(PixelL1 pixel, byte[] buffer, int idx)
+>>>>>>> f9088511ec8202dfa11ee13c0b476e53e6bc4ef6
         {
-            byte[] result = new byte[pixelL1Array.Length];
-            for (int i = 0; i < pixelL1Array.Length; i++)
-            {
-                result[i] = pixelL1Array[i].Luma;
-            }
-            return result;
+            var v = pixel.Luma == 1 ? (byte)255 : (byte)0;
+            buffer[idx + 0] = v;
+            buffer[idx + 1] = v;
+            buffer[idx + 2] = v;
+            buffer[idx + 3] = 255;
         }
 
+<<<<<<< HEAD
         /// <summary>
         /// Converts an array of bytes to an array of PixelL1.
         /// </summary>
@@ -102,5 +145,8 @@ namespace GroupGPixelCrypt.Model.image
             SoftwareBitmap result = new SoftwareBitmap(BitmapPixelFormat.Bgra8, width, height);
             return PixelBgr8.WriteToSoftwareBitmap(bgraPixels, result);
         }
+=======
+        #endregion
+>>>>>>> f9088511ec8202dfa11ee13c0b476e53e6bc4ef6
     }
 }

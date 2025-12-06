@@ -5,8 +5,6 @@ VisualStudioVersion = 17.14.36518.9
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GroupGPixelCrypt", "GroupGPixelCrypt\GroupGPixelCrypt.csproj", "{2C97C8ED-80B2-44B6-A5F5-F5F5AFF62E14}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GroupGPixelCrypt.Tests", "GroupGPixelCrypt.Tests\GroupGPixelCrypt.Tests.csproj", "{DDA75CE2-CB88-4DB6-91C3-FF0420E895DD}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
@@ -43,30 +41,6 @@ Global
 		{2C97C8ED-80B2-44B6-A5F5-F5F5AFF62E14}.Release|x86.ActiveCfg = Release|x86
 		{2C97C8ED-80B2-44B6-A5F5-F5F5AFF62E14}.Release|x86.Build.0 = Release|x86
 		{2C97C8ED-80B2-44B6-A5F5-F5F5AFF62E14}.Release|x86.Deploy.0 = Release|x86
-		{DDA75CE2-CB88-4DB6-91C3-FF0420E895DD}.Debug|ARM.ActiveCfg = Debug|ARM
-		{DDA75CE2-CB88-4DB6-91C3-FF0420E895DD}.Debug|ARM.Build.0 = Debug|ARM
-		{DDA75CE2-CB88-4DB6-91C3-FF0420E895DD}.Debug|ARM.Deploy.0 = Debug|ARM
-		{DDA75CE2-CB88-4DB6-91C3-FF0420E895DD}.Debug|ARM64.ActiveCfg = Debug|ARM64
-		{DDA75CE2-CB88-4DB6-91C3-FF0420E895DD}.Debug|ARM64.Build.0 = Debug|ARM64
-		{DDA75CE2-CB88-4DB6-91C3-FF0420E895DD}.Debug|ARM64.Deploy.0 = Debug|ARM64
-		{DDA75CE2-CB88-4DB6-91C3-FF0420E895DD}.Debug|x64.ActiveCfg = Debug|x64
-		{DDA75CE2-CB88-4DB6-91C3-FF0420E895DD}.Debug|x64.Build.0 = Debug|x64
-		{DDA75CE2-CB88-4DB6-91C3-FF0420E895DD}.Debug|x64.Deploy.0 = Debug|x64
-		{DDA75CE2-CB88-4DB6-91C3-FF0420E895DD}.Debug|x86.ActiveCfg = Debug|x86
-		{DDA75CE2-CB88-4DB6-91C3-FF0420E895DD}.Debug|x86.Build.0 = Debug|x86
-		{DDA75CE2-CB88-4DB6-91C3-FF0420E895DD}.Debug|x86.Deploy.0 = Debug|x86
-		{DDA75CE2-CB88-4DB6-91C3-FF0420E895DD}.Release|ARM.ActiveCfg = Release|ARM
-		{DDA75CE2-CB88-4DB6-91C3-FF0420E895DD}.Release|ARM.Build.0 = Release|ARM
-		{DDA75CE2-CB88-4DB6-91C3-FF0420E895DD}.Release|ARM.Deploy.0 = Release|ARM
-		{DDA75CE2-CB88-4DB6-91C3-FF0420E895DD}.Release|ARM64.ActiveCfg = Release|ARM64
-		{DDA75CE2-CB88-4DB6-91C3-FF0420E895DD}.Release|ARM64.Build.0 = Release|ARM64
-		{DDA75CE2-CB88-4DB6-91C3-FF0420E895DD}.Release|ARM64.Deploy.0 = Release|ARM64
-		{DDA75CE2-CB88-4DB6-91C3-FF0420E895DD}.Release|x64.ActiveCfg = Release|x64
-		{DDA75CE2-CB88-4DB6-91C3-FF0420E895DD}.Release|x64.Build.0 = Release|x64
-		{DDA75CE2-CB88-4DB6-91C3-FF0420E895DD}.Release|x64.Deploy.0 = Release|x64
-		{DDA75CE2-CB88-4DB6-91C3-FF0420E895DD}.Release|x86.ActiveCfg = Release|x86
-		{DDA75CE2-CB88-4DB6-91C3-FF0420E895DD}.Release|x86.Build.0 = Release|x86
-		{DDA75CE2-CB88-4DB6-91C3-FF0420E895DD}.Release|x86.Deploy.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

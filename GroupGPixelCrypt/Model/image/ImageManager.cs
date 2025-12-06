@@ -1,90 +1,128 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices.WindowsRuntime;
-using System.Text;
 using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
-using Windows.Media.Audio;
 using Windows.Storage;
-using Windows.Storage.Streams;
-using GroupGPixelCrypt.Model.image;
+using GroupGPixelCrypt.Data;
 
-namespace GroupGPixelCrypt.Model
+namespace GroupGPixelCrypt.Model.image
 {
     public class ImageManager
     {
-
         #region Properties
 
         public SoftwareBitmap SoftwareBitmap { get; private set; }
-        public const int BytesPerPixelBgra8 = 4;
 
         #endregion
 
         #region Constructors
 
-        public static async Task<ImageManager> FromImageFile(StorageFile imageFile)
-        {
-            IRandomAccessStream stream = await imageFile.OpenAsync(FileAccessMode.Read);
-            BitmapDecoder decoder = await BitmapDecoder.CreateAsync(stream);
-            SoftwareBitmap softwareBitmap = await decoder.GetSoftwareBitmapAsync();
-            return new ImageManager(softwareBitmap);
-        }
-
         private ImageManager(SoftwareBitmap softwareBitmap)
         {
-            ConvertToCorrectFormat(softwareBitmap);
-            Debug.WriteLine(softwareBitmap.PixelHeight.ToString() + softwareBitmap.PixelWidth.ToString());
+            softwareBitmap = ConvertToCorrectFormat(softwareBitmap);
+            Debug.WriteLine($"{softwareBitmap.PixelHeight}x{softwareBitmap.PixelWidth}");
             this.SoftwareBitmap = softwareBitmap;
         }
 
-        /// <summary>
-        /// Converts to correct format.
-        /// </summary>
-        /// <param name="softwareBitmap">The software bitmap.</param>
-        /// <returns></returns>
+        #endregion
+
+        #region Methods
+
+        public static async Task<ImageManager> FromImageFile(StorageFile imageFile)
+        {
+            var stream = await imageFile.OpenAsync(FileAccessMode.Read);
+            var decoder = await BitmapDecoder.CreateAsync(stream);
+            var softwareBitmap = await decoder.GetSoftwareBitmapAsync();
+            return new ImageManager(softwareBitmap);
+        }
+
         public static SoftwareBitmap ConvertToCorrectFormat(SoftwareBitmap softwareBitmap)
         {
             if (softwareBitmap.BitmapPixelFormat != BitmapPixelFormat.Bgra8 ||
                 softwareBitmap.BitmapAlphaMode == BitmapAlphaMode.Straight)
             {
-                softwareBitmap = SoftwareBitmap.Convert(softwareBitmap, BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
+                softwareBitmap = SoftwareBitmap.Convert(
+                    softwareBitmap,
+                    BitmapPixelFormat.Bgra8,
+                    BitmapAlphaMode.Premultiplied);
             }
 
             return softwareBitmap;
         }
 
-        public SoftwareBitmap resize(SoftwareBitmap image, int newWidth, int newHeight)
+        public static SoftwareBitmap PadToMatch(
+            SoftwareBitmap messageBitmap,
+            SoftwareBitmap sourceBitmap,
+            byte padBlue = 0,
+            byte padGreen = 0,
+            byte padRed = 0,
+            byte padAlpha = StegoConstants.AlphaOpaque)
         {
-            PixelBgr8 [] pixels = PixelBgr8.FromSoftwareBitmap(image);
-            List<PixelBgr8> resizedPixels = new List<PixelBgr8>();
-            IList<PixelBgr8> currentRow = new List<PixelBgr8>();
-            for (int i = 0; i < image.PixelHeight; i++)
+            if (messageBitmap == null)
             {
-                int pixelIndex = i * image.PixelWidth;
-                currentRow = pixels.ToList().GetRange(pixelIndex, pixelIndex + image.PixelWidth);
-                currentRow = this.resizeRow(currentRow, newWidth);
-                resizedPixels.AddRange(currentRow);
+                throw new ArgumentNullException(nameof(messageBitmap));
             }
 
-            byte[]resizedBytes = PixelBgr8.ToByteArray(resizedPixels.ToArray());
-            SoftwareBitmap newImage = SoftwareBitmap.CreateCopyFromBuffer(resizedBytes.AsBuffer(),
-                BitmapPixelFormat.Bgra8, newWidth, newHeight);
-            return newImage;
-        }
-
-        private IList<PixelBgr8> resizeRow(IList<PixelBgr8> row, int newWidth)
-        {
-            for (int i = 0; i < newWidth - row.Count; i++)
+            if (sourceBitmap == null)
             {
-                row.Add(PixelBgr8.whitePixel());
+                throw new ArgumentNullException(nameof(sourceBitmap));
             }
 
-            return row;
+            messageBitmap = ConvertToCorrectFormat(messageBitmap);
+            sourceBitmap = ConvertToCorrectFormat(sourceBitmap);
+
+            var targetWidth = sourceBitmap.PixelWidth;
+            var targetHeight = sourceBitmap.PixelHeight;
+
+            if (messageBitmap.PixelWidth > targetWidth || messageBitmap.PixelHeight > targetHeight)
+            {
+                throw new ArgumentException("Message image exceeds source dimensions.");
+            }
+
+            var padded = new SoftwareBitmap(BitmapPixelFormat.Bgra8, targetWidth, targetHeight,
+                BitmapAlphaMode.Premultiplied);
+            var rawOut = new byte[targetWidth * targetHeight * StegoConstants.BytesPerPixelBgra8];
+
+            for (var i = 0; i < rawOut.Length; i += StegoConstants.BytesPerPixelBgra8)
+            {
+                rawOut[i + 0] = padBlue;
+                rawOut[i + 1] = padGreen;
+                rawOut[i + 2] = padRed;
+                rawOut[i + 3] = padAlpha;
+            }
+
+            var rawMsg = new byte[messageBitmap.PixelWidth * messageBitmap.PixelHeight *
+                                  StegoConstants.BytesPerPixelBgra8];
+            messageBitmap.CopyToBuffer(rawMsg.AsBuffer());
+
+            var msgStride = messageBitmap.PixelWidth * StegoConstants.BytesPerPixelBgra8;
+            var outStride = targetWidth * StegoConstants.BytesPerPixelBgra8;
+
+            var copyWidth = messageBitmap.PixelWidth;
+            var copyHeight = messageBitmap.PixelHeight;
+
+            for (var y = 0; y < copyHeight; y++)
+            {
+                var srcRow = y * msgStride;
+                var dstRow = y * outStride;
+
+                for (var x = 0; x < copyWidth; x++)
+                {
+                    var srcIdx = srcRow + x * StegoConstants.BytesPerPixelBgra8;
+                    var dstIdx = dstRow + x * StegoConstants.BytesPerPixelBgra8;
+
+                    rawOut[dstIdx + 0] = rawMsg[srcIdx + 0];
+                    rawOut[dstIdx + 1] = rawMsg[srcIdx + 1];
+                    rawOut[dstIdx + 2] = rawMsg[srcIdx + 2];
+                    rawOut[dstIdx + 3] = rawMsg[srcIdx + 3];
+                }
+            }
+
+            padded.CopyFromBuffer(rawOut.AsBuffer());
+            return padded;
         }
+
         #endregion
     }
 }
