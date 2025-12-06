@@ -46,8 +46,8 @@ namespace GroupGPixelCrypt.View
             var file = await this.pickMessageFile();
             if (file != null)
             {
-                var ext = file.FileType.ToLowerInvariant();
-                if (ext == ".png" || ext == ".bmp")
+                var extension = file.FileType.ToLowerInvariant();
+                if (extension == ".png" || extension == ".bmp")
                 {
                     await this.ViewModel.LoadMessageImage(file);
                     await this.setImageControl(this.messageImage, this.ViewModel.MessageBitmap);
@@ -55,7 +55,7 @@ namespace GroupGPixelCrypt.View
                     this.messagePreviewScrollViewer.Visibility = Visibility.Collapsed;
                     this.messagePreviewTextBlock.Text = string.Empty;
                 }
-                else if (ext == ".txt")
+                else if (extension == ".txt")
                 {
                     await this.ViewModel.LoadMessageText(file);
                     this.messagePreviewTextBlock.Text = this.ViewModel.MessageText ?? string.Empty;

@@ -28,18 +28,18 @@ namespace GroupGPixelCrypt.Encrypters
 
         internal static string ApplyVigenere(string text, string keyword)
         {
-            var sb = new StringBuilder(text.Length);
-            int ki = 0, klen = keyword.Length;
+            var stringBuilder = new StringBuilder(text.Length);
+            int keywordIndex = 0, klen = keyword.Length;
 
             foreach (var c in text)
             {
-                var shift = keyword[ki % klen] - StegoConstants.FirstLetter;
+                var shift = keyword[keywordIndex % klen] - StegoConstants.FirstLetter;
                 var encrypt = (c - StegoConstants.FirstLetter + shift) % StegoConstants.MaxLetterSymbol;
-                sb.Append((char)(encrypt + StegoConstants.FirstLetter));
-                ki++;
+                stringBuilder.Append((char)(encrypt + StegoConstants.FirstLetter));
+                keywordIndex++;
             }
 
-            return sb.ToString();
+            return stringBuilder.ToString();
         }
 
         #endregion

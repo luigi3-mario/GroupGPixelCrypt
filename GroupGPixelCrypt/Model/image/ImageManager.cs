@@ -105,18 +105,18 @@ namespace GroupGPixelCrypt.Model.image
 
             for (var y = 0; y < copyHeight; y++)
             {
-                var srcRow = y * msgStride;
-                var dstRow = y * outStride;
+                var sourceRow = y * msgStride;
+                var destinationRow = y * outStride;
 
                 for (var x = 0; x < copyWidth; x++)
                 {
-                    var srcIdx = srcRow + x * StegoConstants.BytesPerPixelBgra8;
-                    var dstIdx = dstRow + x * StegoConstants.BytesPerPixelBgra8;
+                    var sourceIndex = sourceRow + x * StegoConstants.BytesPerPixelBgra8;
+                    var destinationIndex = destinationRow + x * StegoConstants.BytesPerPixelBgra8;
 
-                    rawOut[dstIdx + StegoConstants.ChannelBlue] = rawMsg[srcIdx + StegoConstants.ChannelBlue];
-                    rawOut[dstIdx + StegoConstants.ChannelGreen] = rawMsg[srcIdx + StegoConstants.ChannelGreen];
-                    rawOut[dstIdx + StegoConstants.ChannelRed] = rawMsg[srcIdx + StegoConstants.ChannelRed];
-                    rawOut[dstIdx + StegoConstants.ChannelAlpha] = rawMsg[srcIdx + StegoConstants.ChannelAlpha];
+                    rawOut[destinationIndex + StegoConstants.ChannelBlue] = rawMsg[sourceIndex + StegoConstants.ChannelBlue];
+                    rawOut[destinationIndex + StegoConstants.ChannelGreen] = rawMsg[sourceIndex + StegoConstants.ChannelGreen];
+                    rawOut[destinationIndex + StegoConstants.ChannelRed] = rawMsg[sourceIndex + StegoConstants.ChannelRed];
+                    rawOut[destinationIndex + StegoConstants.ChannelAlpha] = rawMsg[sourceIndex + StegoConstants.ChannelAlpha];
                 }
             }
 

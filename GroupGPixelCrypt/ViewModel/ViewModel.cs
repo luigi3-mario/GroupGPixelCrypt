@@ -170,10 +170,10 @@ namespace GroupGPixelCrypt.ViewModel
                         var encrypter = new TextEncrypter();
                         this.EncryptedMessage = encrypter.EncryptMessage(this.Keyword, cleaned);
 
-                        var idxKey = this.EncryptedMessage.IndexOf("#KEY#", StringComparison.Ordinal);
-                        var idxEnd = this.EncryptedMessage.LastIndexOf("#-.-#", StringComparison.Ordinal);
-                        textToEmbed = this.EncryptedMessage.Substring(idxKey + StegoConstants.KeyMarkerLength,
-                            idxEnd - (idxKey + StegoConstants.KeyMarkerLength));
+                        var indexKey = this.EncryptedMessage.IndexOf("#KEY#", StringComparison.Ordinal);
+                        var indexEnd = this.EncryptedMessage.LastIndexOf("#-.-#", StringComparison.Ordinal);
+                        textToEmbed = this.EncryptedMessage.Substring(indexKey + StegoConstants.KeyMarkerLength,
+                            indexEnd - (indexKey + StegoConstants.KeyMarkerLength));
                     }
                     else
                     {
@@ -313,11 +313,11 @@ namespace GroupGPixelCrypt.ViewModel
             var buffer = new char[upper.Length];
             var count = 0;
 
-            foreach (var c in upper)
+            foreach (var character in upper)
             {
-                if (c >= 'A' && c <= 'Z')
+                if (character >= StegoConstants.FirstLetter && character <= StegoConstants.LastLetter)
                 {
-                    buffer[count++] = c;
+                    buffer[count++] = character;
                 }
             }
 

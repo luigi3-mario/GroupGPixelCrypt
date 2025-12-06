@@ -8,6 +8,7 @@
         public const int ChannelsPerPixel = 3;
         public const int SymbolBitLength = 5;
         public const char FirstLetter = 'A';
+        public const char LastLetter = 'Z';
         public const int TerminatorSymbol = 0;
         public const int MaxLetterSymbol = 26;
 

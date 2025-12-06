@@ -25,19 +25,19 @@ namespace GroupGPixelCrypt.Decrypters
 
         private static string removeVigenere(string text, string keyword)
         {
-            var sb = new StringBuilder(text.Length);
-            int ki = 0, klen = keyword.Length;
+            var stringBuilder = new StringBuilder(text.Length);
+            int keywordIndex = 0, klen = keyword.Length;
 
             foreach (var c in text)
             {
-                var shift = keyword[ki % klen] - StegoConstants.FirstLetter;
-                var dec = (c - StegoConstants.FirstLetter - shift + StegoConstants.MaxLetterSymbol) %
-                          StegoConstants.MaxLetterSymbol;
-                sb.Append((char)(dec + StegoConstants.FirstLetter));
-                ki++;
+                var shift = keyword[keywordIndex % klen] - StegoConstants.FirstLetter;
+                var decodedIndex = (c - StegoConstants.FirstLetter - shift + StegoConstants.MaxLetterSymbol) %
+                                   StegoConstants.MaxLetterSymbol;
+                stringBuilder.Append((char)(decodedIndex + StegoConstants.FirstLetter));
+                keywordIndex++;
             }
 
-            return sb.ToString();
+            return stringBuilder.ToString();
         }
 
         #endregion

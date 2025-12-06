@@ -45,17 +45,17 @@ namespace GroupGPixelCrypt.Embedders
 
         public SoftwareBitmap EmbedMessage()
         {
-            var srcPixels = PixelBgr8.FromSoftwareBitmap(this.sourceImage);
+            var sourcePixels = PixelBgr8.FromSoftwareBitmap(this.sourceImage);
             var msgPixels = PixelL1.FromSoftwareBitmap(this.messageImage);
 
-            HeaderManager.WriteHeader(srcPixels, false, this.bpcc, this.encryptionUsed);
+            HeaderManager.WriteHeader(sourcePixels, false, this.bpcc, this.encryptionUsed);
 
             for (var y = 0; y < this.messageImage.PixelHeight; y++)
             {
                 for (var x = 0; x < this.messageImage.PixelWidth; x++)
                 {
-                    var srcIndex = getIndex(x, y, this.sourceImage.PixelWidth);
-                    if (srcIndex == 0 || srcIndex == 1)
+                    var sourceIndex = getIndex(x, y, this.sourceImage.PixelWidth);
+                    if (sourceIndex == 0 || sourceIndex == 1)
                     {
                         continue;
                     }
@@ -63,7 +63,7 @@ namespace GroupGPixelCrypt.Embedders
                     var msgIndex = getIndex(x, y, this.messageImage.PixelWidth);
                     var msgBit = extractMessageBit(msgPixels[msgIndex]);
 
-                    srcPixels[srcIndex].Blue = embedBitIntoBlue(srcPixels[srcIndex].Blue, msgBit);
+                    sourcePixels[sourceIndex].Blue = embedBitIntoBlue(sourcePixels[sourceIndex].Blue, msgBit);
                 }
             }
 
@@ -73,7 +73,7 @@ namespace GroupGPixelCrypt.Embedders
                 this.sourceImage.PixelHeight,
                 BitmapAlphaMode.Premultiplied);
 
-            PixelBgr8.WriteToSoftwareBitmap(srcPixels, result);
+            PixelBgr8.WriteToSoftwareBitmap(sourcePixels, result);
 
             return result;
         }
