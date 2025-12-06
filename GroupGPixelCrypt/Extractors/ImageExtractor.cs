@@ -1,8 +1,9 @@
 ﻿using System;
 using Windows.Graphics.Imaging;
+using GroupGPixelCrypt.Data;
 using GroupGPixelCrypt.Model.image;
 
-namespace GroupGPixelCrypt.Model
+namespace GroupGPixelCrypt.Extractors
 {
     public sealed class ImageExtractor
     {
@@ -10,27 +11,30 @@ namespace GroupGPixelCrypt.Model
 
         public ImageExtractor(SoftwareBitmap embeddedImage)
         {
-            this.embeddedImage = ImageManager.ConvertToCorrectFormat(embeddedImage ?? throw new ArgumentNullException(nameof(embeddedImage)));
+            this.embeddedImage =
+                ImageManager.ConvertToCorrectFormat(embeddedImage ??
+                                                    throw new ArgumentNullException(nameof(embeddedImage)));
         }
 
         public bool HasEmbeddedMessage()
         {
             var pixels = PixelBgr8.FromSoftwareBitmap(this.embeddedImage);
-            if (pixels.Length == 0) return false;
-
-            var marker = pixels[0];
-            return marker.Red == 123 && marker.Green == 123 && marker.Blue == 123;
+            return validateImageNotEmpty(pixels) && isMarkerPixel(pixels[0]);
         }
+
 
         public SoftwareBitmap ExtractMessageBitmap()
         {
             var pixels = PixelBgr8.FromSoftwareBitmap(this.embeddedImage);
-            if (pixels.Length == 0)
+            if (!validateImageNotEmpty(pixels))
+            {
                 throw new InvalidOperationException("Image is empty.");
+            }
 
-            var marker = pixels[0];
-            if (marker.Red != 123 || marker.Green != 123 || marker.Blue != 123)
+            if (!isMarkerPixel(pixels[0]))
+            {
                 throw new InvalidOperationException("No embedded message found (marker pixel missing).");
+            }
 
             var width = this.embeddedImage.PixelWidth;
             var height = this.embeddedImage.PixelHeight;
@@ -38,11 +42,33 @@ namespace GroupGPixelCrypt.Model
             var resultPixels = new PixelL1[pixels.Length];
             for (var i = 0; i < pixels.Length; i++)
             {
-                var bit = (byte)(pixels[i].Blue & 0x01);
-                resultPixels[i] = new PixelL1(bit);
+                var bit = extractBitFromBlue(pixels[i].Blue);
+                resultPixels[i] = createPixelFromBit(bit);
             }
 
             return PixelL1.ToSoftwareBitmap(resultPixels, width, height);
+        }
+
+        private static bool validateImageNotEmpty(PixelBgr8[] pixels)
+        {
+            return pixels != null && pixels.Length > 0;
+        }
+
+        private static bool isMarkerPixel(PixelBgr8 pixel)
+        {
+            return pixel.Red == StegoConstants.MarkerValue &&
+                   pixel.Green == StegoConstants.MarkerValue &&
+                   pixel.Blue == StegoConstants.MarkerValue;
+        }
+
+        private static byte extractBitFromBlue(byte blueChannel)
+        {
+            return (byte)(blueChannel & StegoConstants.LsbMask);
+        }
+
+        private static PixelL1 createPixelFromBit(byte bit)
+        {
+            return new PixelL1(bit);
         }
     }
 }

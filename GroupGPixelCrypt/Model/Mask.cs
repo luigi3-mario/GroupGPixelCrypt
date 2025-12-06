@@ -4,11 +4,6 @@ namespace GroupGPixelCrypt.Model
 {
     public class Mask
     {
-
-        public Mask()
-        {
-        }
-
         public static byte SetMaskForUpper(byte bitsPerChannel)
         {
             switch (bitsPerChannel)
@@ -34,9 +29,8 @@ namespace GroupGPixelCrypt.Model
             }
         }
 
-        public static byte SetMaskForLower(byte bitsPerChannel)
-        {
-            return (byte)(~(int)(SetMaskForUpper(bitsPerChannel)));
-        }
+        public static byte SetMaskForLower(byte bitsPerChannel) =>
+            (byte)~SetMaskForUpper(bitsPerChannel);
+
     }
 }

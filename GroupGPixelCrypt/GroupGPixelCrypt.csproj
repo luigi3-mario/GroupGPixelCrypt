@@ -119,12 +119,18 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Data\StegoConstants.cs" />
+    <Compile Include="Decrypters\ImageDecrypter.cs" />
     <Compile Include="Embedders\ImageEmbedder.cs" />
     <Compile Include="Embedders\TextEmbedder.cs" />
     <Compile Include="Extractors\ImageExtractor.cs" />
     <Compile Include="Extractors\TextExtractor.cs" />
     <Compile Include="Encrypters\ImageEncrypter.cs" />
-    <Compile Include="Model\image\HiddenImageManager.cs" />
+    <Compile Include="Helpers\EmbedService.cs" />
+    <Compile Include="Helpers\ExtractService.cs" />
+    <Compile Include="Helpers\ImageFileHelper.cs" />
+    <Compile Include="Helpers\SaveService.cs" />
+    <Compile Include="Model\image\HeaderManager.cs" />
     <Compile Include="Model\image\ImageManager.cs" />
     <Compile Include="Model\image\PixelBgr8.cs" />
     <Compile Include="Model\image\PixelL1.cs" />

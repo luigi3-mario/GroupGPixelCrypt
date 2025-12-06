@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Graphics.Imaging;
 
@@ -7,65 +6,69 @@ namespace GroupGPixelCrypt.Model.image
 {
     public struct PixelBgr8
     {
+        #region Properties
+
         public byte Blue { get; set; }
         public byte Green { get; set; }
         public byte Red { get; set; }
         public byte Alpha { get; set; }
 
+        #endregion
+
+        #region Constructors
+
         public PixelBgr8(byte blue, byte green, byte red, byte alpha)
         {
-            Blue = blue;
-            Green = green;
-            Red = red;
-            Alpha = alpha;
+            this.Blue = blue;
+            this.Green = green;
+            this.Red = red;
+            this.Alpha = alpha;
         }
+
+        #endregion
+
+        #region Methods
 
         public static PixelBgr8[] FromSoftwareBitmap(SoftwareBitmap source)
         {
-            Debug.WriteLine($"[PixelBgr8] Entered FromSoftwareBitmap. Source={(source == null ? "NULL" : "OK")}");
-
             if (source == null)
+            {
                 throw new ArgumentNullException(nameof(source));
+            }
 
             if (source.BitmapPixelFormat != BitmapPixelFormat.Bgra8 ||
                 source.BitmapAlphaMode != BitmapAlphaMode.Premultiplied)
             {
-                Debug.WriteLine("[PixelBgr8] Converting to BGRA8 Premultiplied format.");
                 source = SoftwareBitmap.Convert(source, BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
             }
 
-            int width = source.PixelWidth;
-            int height = source.PixelHeight;
+            var width = source.PixelWidth;
+            var height = source.PixelHeight;
             var result = new PixelBgr8[width * height];
 
             var raw = new byte[height * width * 4];
             source.CopyToBuffer(raw.AsBuffer());
 
-            int stride = width * 4;
-            Debug.WriteLine($"[PixelBgr8] Using stride={stride}, width={width}, height={height}");
+            var stride = width * 4;
 
-            for (int y = 0; y < height; y++)
+            for (var y = 0; y < height; y++)
             {
-                for (int x = 0; x < width; x++)
+                for (var x = 0; x < width; x++)
                 {
-                    int idx = y * stride + x * 4;
-                    result[y * width + x] = new PixelBgr8(
-                        raw[idx + 0],
-                        raw[idx + 1],
-                        raw[idx + 2],
-                        raw[idx + 3]
-                    );
+                    var idx = getIndex(x, y, stride);
+                    result[y * width + x] = createPixel(raw, idx);
                 }
             }
 
-            Debug.WriteLine($"[PixelBgr8] Returning array length={result.Length}");
             return result;
         }
 
         public static SoftwareBitmap WriteToSoftwareBitmap(PixelBgr8[] pixels, SoftwareBitmap target)
         {
             if (pixels.Length != target.PixelWidth * target.PixelHeight)
+            {
                 throw new ArgumentException("Pixel array size does not match bitmap dimensions.");
+            }
 
             var raw = ToByteArray(pixels);
             target.CopyFromBuffer(raw.AsBuffer());
@@ -77,12 +80,35 @@ namespace GroupGPixelCrypt.Model.image
             var raw = new byte[pixels.Length * 4];
             for (var i = 0; i < pixels.Length; i++)
             {
-                raw[i * 4 + 0] = pixels[i].Blue;
-                raw[i * 4 + 1] = pixels[i].Green;
-                raw[i * 4 + 2] = pixels[i].Red;
-                raw[i * 4 + 3] = pixels[i].Alpha;
+                writePixelToRaw(pixels[i], raw, i * 4);
             }
+
             return raw;
         }
+
+        private static int getIndex(int x, int y, int stride)
+        {
+            return y * stride + x * 4;
+        }
+
+        private static PixelBgr8 createPixel(byte[] raw, int idx)
+        {
+            return new PixelBgr8(
+                raw[idx + 0],
+                raw[idx + 1],
+                raw[idx + 2],
+                raw[idx + 3]
+            );
+        }
+
+        private static void writePixelToRaw(PixelBgr8 pixel, byte[] raw, int idx)
+        {
+            raw[idx + 0] = pixel.Blue;
+            raw[idx + 1] = pixel.Green;
+            raw[idx + 2] = pixel.Red;
+            raw[idx + 3] = pixel.Alpha;
+        }
+
+        #endregion
     }
 }

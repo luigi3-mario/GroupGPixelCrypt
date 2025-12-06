@@ -1,65 +1,71 @@
 ﻿using System;
-using System.Diagnostics;
 using Windows.Graphics.Imaging;
+using GroupGPixelCrypt.Data;
 using GroupGPixelCrypt.Model.image;
 
 namespace GroupGPixelCrypt.Embedders
 {
-    /// <summary>
-    /// Embeds a monochrome message image into a source image.
-    /// </summary>
     public sealed class ImageEmbedder
     {
+        #region Data members
+
         private readonly SoftwareBitmap sourceImage;
         private readonly SoftwareBitmap messageImage;
+        private readonly byte bpcc;
+        private readonly bool encryptionUsed;
 
-        public ImageEmbedder(SoftwareBitmap messageImage, SoftwareBitmap sourceImage)
+        #endregion
+
+        #region Constructors
+
+        public ImageEmbedder(SoftwareBitmap messageImage, SoftwareBitmap sourceImage, byte bpcc = 1,
+            bool encryptionUsed = false)
         {
-            this.messageImage = ImageManager.ConvertToCorrectFormat(messageImage ?? throw new ArgumentNullException(nameof(messageImage)));
-            this.sourceImage = ImageManager.ConvertToCorrectFormat(sourceImage ?? throw new ArgumentNullException(nameof(sourceImage)));
+            this.messageImage =
+                ImageManager.ConvertToCorrectFormat(messageImage ??
+                                                    throw new ArgumentNullException(nameof(messageImage)));
+            this.sourceImage =
+                ImageManager.ConvertToCorrectFormat(sourceImage ??
+                                                    throw new ArgumentNullException(nameof(sourceImage)));
 
-            Debug.WriteLine($"[ImageEmbedder] Source size={this.sourceImage.PixelWidth}x{this.sourceImage.PixelHeight}");
-            Debug.WriteLine($"[ImageEmbedder] Message size={this.messageImage.PixelWidth}x{this.messageImage.PixelHeight}");
+            if (bpcc < 1 || bpcc > 8)
+            {
+                throw new ArgumentOutOfRangeException(nameof(bpcc));
+            }
 
-            if (this.messageImage.PixelWidth > this.sourceImage.PixelWidth ||
-                this.messageImage.PixelHeight > this.sourceImage.PixelHeight)
-                throw new ArgumentException("Message image exceeds source dimensions.");
+            this.bpcc = bpcc;
+            this.encryptionUsed = encryptionUsed;
+
+            this.validateDimensions();
         }
+
+        #endregion
+
+        #region Methods
 
         public SoftwareBitmap EmbedMessage()
         {
-            Debug.WriteLine("[ImageEmbedder] Starting EmbedMessage.");
-
             var srcPixels = PixelBgr8.FromSoftwareBitmap(this.sourceImage);
             var msgPixels = PixelL1.FromSoftwareBitmap(this.messageImage);
 
-            Debug.WriteLine($"[ImageEmbedder] srcPixels length={srcPixels?.Length}, msgPixels length={msgPixels?.Length}");
+            HeaderManager.WriteHeader(srcPixels, false, this.bpcc, this.encryptionUsed);
 
-            // Pixel 0 marker
-            srcPixels[0].Red = 123;
-            srcPixels[0].Green = 123;
-            srcPixels[0].Blue = 123;
-
-            // Pixel 1 header: mark as image (Blue LSB = 0)
-            srcPixels[1].Red = 0;
-            srcPixels[1].Green = 0;
-            srcPixels[1].Blue = 0;
-
-            for (int y = 0; y < this.messageImage.PixelHeight; y++)
+            for (var y = 0; y < this.messageImage.PixelHeight; y++)
             {
-                for (int x = 0; x < this.messageImage.PixelWidth; x++)
+                for (var x = 0; x < this.messageImage.PixelWidth; x++)
                 {
-                    int srcIndex = y * this.sourceImage.PixelWidth + x;
-                    if (srcIndex == 0 || srcIndex == 1) continue;
+                    var srcIndex = getIndex(x, y, this.sourceImage.PixelWidth);
+                    if (srcIndex == 0 || srcIndex == 1)
+                    {
+                        continue;
+                    }
 
-                    int msgIndex = y * this.messageImage.PixelWidth + x;
-                    byte msgBit = (byte)(msgPixels[msgIndex].Luma & 1);
+                    var msgIndex = getIndex(x, y, this.messageImage.PixelWidth);
+                    var msgBit = extractMessageBit(msgPixels[msgIndex]);
 
-                    srcPixels[srcIndex].Blue = (byte)((srcPixels[srcIndex].Blue & 0xFE) | msgBit);
+                    srcPixels[srcIndex].Blue = embedBitIntoBlue(srcPixels[srcIndex].Blue, msgBit);
                 }
             }
-
-            Debug.WriteLine("[ImageEmbedder] Finished embedding bits into source pixels.");
 
             var result = new SoftwareBitmap(
                 BitmapPixelFormat.Bgra8,
@@ -69,8 +75,33 @@ namespace GroupGPixelCrypt.Embedders
 
             PixelBgr8.WriteToSoftwareBitmap(srcPixels, result);
 
-            Debug.WriteLine("[ImageEmbedder] Returning embedded SoftwareBitmap.");
             return result;
         }
+
+        private void validateDimensions()
+        {
+            if (this.messageImage.PixelWidth > this.sourceImage.PixelWidth ||
+                this.messageImage.PixelHeight > this.sourceImage.PixelHeight)
+            {
+                throw new ArgumentException("Message image exceeds source dimensions.");
+            }
+        }
+
+        private static byte extractMessageBit(PixelL1 pixel)
+        {
+            return (byte)(pixel.Luma & 1);
+        }
+
+        private static byte embedBitIntoBlue(byte blueChannel, byte bit)
+        {
+            return (byte)((blueChannel & StegoConstants.ClearLsbMask) | bit);
+        }
+
+        private static int getIndex(int x, int y, int stride)
+        {
+            return y * stride + x;
+        }
+
+        #endregion
     }
 }
