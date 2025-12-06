@@ -2,12 +2,7 @@
     x:Class="GroupGPixelCrypt.View.MainPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:viewModel="using:GroupGPixelCrypt.ViewModel"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-
-    <Page.DataContext>
-        <viewModel:MainViewModel x:Name="viewModel" />
-    </Page.DataContext>
 
     <Grid Margin="40">
         <Grid.ColumnDefinitions>
@@ -17,112 +12,73 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <!-- Source Image -->
         <StackPanel Grid.Column="0" HorizontalAlignment="Center">
-            <Border BorderBrush="Black"
-                    BorderThickness="1"
-                    Width="350"
-                    Height="350"
-                    Margin="0,0,0,10">
+            <Border BorderBrush="Black" BorderThickness="1" Width="350" Height="350" Margin="0,0,0,10">
                 <Image x:Name="sourceImage" Stretch="Uniform" />
             </Border>
-            <Button Content="Open Source Image"
-                    Width="150"
-                    Click="OpenSourceImageButton_Click" />
+            <Button Content="Open Source Image" Width="150" Click="OpenSourceImageButton_Click" />
         </StackPanel>
-
 
         <StackPanel Grid.Column="1" HorizontalAlignment="Center">
-            <Border BorderBrush="Black"
-                    BorderThickness="1"
-                    Width="350"
-                    Height="350"
-                    Margin="0,0,0,10">
+            <Border BorderBrush="Black" BorderThickness="1" Width="350" Height="350" Margin="0,0,0,10">
                 <Grid>
-                    <Image x:Name="messageImage"
-                           Stretch="Uniform"
-                           Visibility="Collapsed" />
-                    <ScrollViewer x:Name="messagePreviewScrollViewer"
-                                  Visibility="Collapsed">
-                        <TextBlock x:Name="messagePreviewTextBlock"
-                                   TextWrapping="Wrap"
-                                   FontSize="18" />
+                    <Image x:Name="messageImage" Stretch="Uniform" Visibility="Collapsed" />
+                    <ScrollViewer x:Name="messagePreviewScrollViewer" Visibility="Collapsed">
+                        <TextBlock x:Name="messagePreviewTextBlock" TextWrapping="Wrap" FontSize="18" />
                     </ScrollViewer>
                 </Grid>
             </Border>
 
-            <Button Content="Open Message File"
+            <Button Content="Open Message File" Width="150" Click="OpenMessageFileButton_Click" />
+            <Button Content="Embed"
                     Width="150"
-                    Click="OpenMessageFileButton_Click" />
-
-
-            <Button
-                Content="Embed"
-                Width="150"
-                Margin="0,10,0,0"
-                IsEnabled="{x:Bind viewModel.CanEmbed, Mode=OneWay}"
-                Click="EmbedButton_Click" />
-
-            <Button
-                Content="Extract"
-                Width="150"
-                IsEnabled="{x:Bind viewModel.CanExtract, Mode=OneWay}"
-                Click="ExtractButton_Click" />
+                    Margin="0,10,0,0"
+                    IsEnabled="{x:Bind ViewModel.CanEmbed, Mode=OneWay}"
+                    Click="EmbedButton_Click" />
+            <Button Content="Extract"
+                    Width="150"
+                    IsEnabled="{x:Bind ViewModel.CanExtract, Mode=OneWay}"
+                    Click="ExtractButton_Click" />
         </StackPanel>
 
-
         <StackPanel Grid.Column="2" HorizontalAlignment="Center">
-            <Border BorderBrush="Black"
-                    BorderThickness="1"
-                    Width="350"
-                    Height="350"
-                    Margin="0,0,0,10">
+            <Border BorderBrush="Black" BorderThickness="1" Width="350" Height="350" Margin="0,0,0,10">
                 <Grid>
-                    <Image x:Name="targetImage"
-                           Stretch="Uniform"
-                           Visibility="Visible" />
-                    <ScrollViewer x:Name="messageScrollViewer"
-                                  Visibility="Visible">
-                        <TextBlock x:Name="messageTextBlock"
-                                   TextWrapping="Wrap"
-                                   FontSize="18" />
+                    <Image x:Name="targetImage" Stretch="Uniform" Visibility="Visible" />
+                    <ScrollViewer x:Name="messageScrollViewer" Visibility="Visible">
+                        <TextBlock x:Name="messageTextBlock" TextWrapping="Wrap" FontSize="18" />
                     </ScrollViewer>
                 </Grid>
             </Border>
 
-
-            <Button 
-                    Content="Save Output Image"
+            <Button Content="Save Output Image"
                     Width="150"
-                    IsEnabled="{x:Bind viewModel.CanSave, Mode=OneWay}"
+                    IsEnabled="{x:Bind ViewModel.CanSave, Mode=OneWay}"
                     Click="SaveOutputButton_Click" />
         </StackPanel>
 
-
         <StackPanel Grid.Column="3" HorizontalAlignment="Center">
-            <Border BorderBrush="Black"
-                    BorderThickness="1"
-                    Width="350"
-                    Height="350"
-                    Margin="0,0,0,10">
-                <Image x:Name="encryptedOutputImage"
-                       Stretch="Uniform"
-                       Visibility="Collapsed"
-                       Width="350"
-                       Height="350" />
+            <Border BorderBrush="Black" BorderThickness="1" Width="350" Height="350" Margin="0,0,0,10">
+                <Grid>
+                 
+                    <Image x:Name="encryptedImage" Stretch="Uniform" Visibility="Collapsed" />
+                    <ScrollViewer Visibility="Visible">
+                        <TextBlock Text="{x:Bind ViewModel.EncryptedMessage, Mode=OneWay}"
+                                   TextWrapping="Wrap"
+                                   FontSize="18"
+                                   Visibility="{x:Bind ViewModel.EncryptionUsed, Mode=OneWay}" />
+                    </ScrollViewer>
+                </Grid>
             </Border>
 
-            <StackPanel Orientation="Horizontal"
-                        HorizontalAlignment="Center"
-                        Margin="0,10,0,0">
-                <RadioButton x:Name="unencryptedRadioButton"
-                             Content="Unencrypted"
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
+                <RadioButton Content="Unencrypted"
                              GroupName="CryptoMode"
-                             IsChecked="True" />
-                <RadioButton x:Name="encryptedRadioButton"
-                             Content="Encrypted"
+                             IsChecked="{x:Bind ViewModel.UnencryptedMode, Mode=TwoWay}" />
+                <RadioButton Content="Encrypted"
                              GroupName="CryptoMode"
-                             Margin="20,0,0,0" />
+                             Margin="20,0,0,0"
+                             IsChecked="{x:Bind ViewModel.EncryptionUsed, Mode=TwoWay}" />
             </StackPanel>
         </StackPanel>
     </Grid>

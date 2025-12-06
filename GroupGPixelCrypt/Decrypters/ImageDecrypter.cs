@@ -1,29 +1,21 @@
 ﻿using System;
 using GroupGPixelCrypt.Model.image;
+using Windows.Graphics.Imaging;
 
 namespace GroupGPixelCrypt.Decrypters
 {
     public static class ImageDecrypter
     {
-        #region Methods
-
-        public static PixelBgr8[] DecryptQuadrants(PixelBgr8[] source, int width, int height)
+        public static SoftwareBitmap DecryptQuadrants(SoftwareBitmap input)
         {
-            if (source == null)
+            if (input == null)
             {
-                throw new ArgumentNullException(nameof(source));
+                throw new ArgumentNullException(nameof(input));
             }
 
-            if (width <= 0 || height <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(width), "Invalid dimensions.");
-
-            }
-
-            if (source.Length != width * height)
-            {
-                throw new ArgumentException("Pixel array size mismatch.");
-            }
+            var width = input.PixelWidth;
+            var height = input.PixelHeight;
+            var source = PixelBgr8.FromSoftwareBitmap(input);
 
             var destination = new PixelBgr8[source.Length];
 
@@ -44,14 +36,17 @@ namespace GroupGPixelCrypt.Decrypters
 
             copyRegion(source, destination, bottomRightX0, bottomRightY0, topLeftX0, topLeftY0,
                 bottomRightX1 - bottomRightX0, bottomRightY1 - bottomRightY0, width);
+
             copyRegion(source, destination, topLeftX0, topLeftY0, bottomRightX0, bottomRightY0,
                 topLeftX1, topLeftY1, width);
+
             copyRegion(source, destination, bottomLeftX0, bottomLeftY0, topRightX0, topRightY0,
-                bottomLeftX1, bottomLeftY1 - bottomLeftY0, width);
+                bottomLeftX1 , bottomLeftY1 - bottomLeftY0, width);
+
             copyRegion(source, destination, topRightX0, topRightY0, bottomLeftX0, bottomLeftY0,
                 topRightX1 - topRightX0, topRightY1, width);
 
-            return destination;
+            return PixelBgr8.ToSoftwareBitmap(destination, input.PixelWidth, input.PixelHeight);
         }
 
         private static void copyRegion(
@@ -75,7 +70,5 @@ namespace GroupGPixelCrypt.Decrypters
                 }
             }
         }
-
-        #endregion
     }
 }

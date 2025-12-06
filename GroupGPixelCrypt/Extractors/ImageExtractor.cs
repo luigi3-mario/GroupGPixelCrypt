@@ -7,7 +7,13 @@ namespace GroupGPixelCrypt.Extractors
 {
     public sealed class ImageExtractor
     {
+        #region Data members
+
         private readonly SoftwareBitmap embeddedImage;
+
+        #endregion
+
+        #region Constructors
 
         public ImageExtractor(SoftwareBitmap embeddedImage)
         {
@@ -16,12 +22,9 @@ namespace GroupGPixelCrypt.Extractors
                                                     throw new ArgumentNullException(nameof(embeddedImage)));
         }
 
-        public bool HasEmbeddedMessage()
-        {
-            var pixels = PixelBgr8.FromSoftwareBitmap(this.embeddedImage);
-            return validateImageNotEmpty(pixels) && isMarkerPixel(pixels[0]);
-        }
+        #endregion
 
+        #region Methods
 
         public SoftwareBitmap ExtractMessageBitmap()
         {
@@ -70,5 +73,7 @@ namespace GroupGPixelCrypt.Extractors
         {
             return new PixelL1(bit);
         }
+
+        #endregion
     }
 }

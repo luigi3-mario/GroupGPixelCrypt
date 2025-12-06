@@ -82,14 +82,15 @@ namespace GroupGPixelCrypt.Model.image
 
             var padded = new SoftwareBitmap(BitmapPixelFormat.Bgra8, targetWidth, targetHeight,
                 BitmapAlphaMode.Premultiplied);
+
             var rawOut = new byte[targetWidth * targetHeight * StegoConstants.BytesPerPixelBgra8];
 
             for (var i = 0; i < rawOut.Length; i += StegoConstants.BytesPerPixelBgra8)
             {
-                rawOut[i + 0] = padBlue;
-                rawOut[i + 1] = padGreen;
-                rawOut[i + 2] = padRed;
-                rawOut[i + 3] = padAlpha;
+                rawOut[i + StegoConstants.ChannelBlue] = padBlue;
+                rawOut[i + StegoConstants.ChannelGreen] = padGreen;
+                rawOut[i + StegoConstants.ChannelRed] = padRed;
+                rawOut[i + StegoConstants.ChannelAlpha] = padAlpha;
             }
 
             var rawMsg = new byte[messageBitmap.PixelWidth * messageBitmap.PixelHeight *
@@ -112,10 +113,10 @@ namespace GroupGPixelCrypt.Model.image
                     var srcIdx = srcRow + x * StegoConstants.BytesPerPixelBgra8;
                     var dstIdx = dstRow + x * StegoConstants.BytesPerPixelBgra8;
 
-                    rawOut[dstIdx + 0] = rawMsg[srcIdx + 0];
-                    rawOut[dstIdx + 1] = rawMsg[srcIdx + 1];
-                    rawOut[dstIdx + 2] = rawMsg[srcIdx + 2];
-                    rawOut[dstIdx + 3] = rawMsg[srcIdx + 3];
+                    rawOut[dstIdx + StegoConstants.ChannelBlue] = rawMsg[srcIdx + StegoConstants.ChannelBlue];
+                    rawOut[dstIdx + StegoConstants.ChannelGreen] = rawMsg[srcIdx + StegoConstants.ChannelGreen];
+                    rawOut[dstIdx + StegoConstants.ChannelRed] = rawMsg[srcIdx + StegoConstants.ChannelRed];
+                    rawOut[dstIdx + StegoConstants.ChannelAlpha] = rawMsg[srcIdx + StegoConstants.ChannelAlpha];
                 }
             }
 

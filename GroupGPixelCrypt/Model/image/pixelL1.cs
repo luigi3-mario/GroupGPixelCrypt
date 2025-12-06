@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Graphics.Imaging;
+using GroupGPixelCrypt.Data;
 
 namespace GroupGPixelCrypt.Model.image
 {
@@ -45,19 +46,19 @@ namespace GroupGPixelCrypt.Model.image
             var height = source.PixelHeight;
             var result = new PixelL1[width * height];
 
-            var raw = new byte[height * width * 4];
+            var raw = new byte[height * width * StegoConstants.BytesPerPixelBgra8];
             source.CopyToBuffer(raw.AsBuffer());
 
-            var stride = width * 4;
+            var stride = width * StegoConstants.BytesPerPixelBgra8;
 
             for (var y = 0; y < height; y++)
             {
                 for (var x = 0; x < width; x++)
                 {
                     var idx = getIndex(x, y, stride);
-                    var blue = raw[idx + 0];
-                    var green = raw[idx + 1];
-                    var red = raw[idx + 2];
+                    var blue = raw[idx + StegoConstants.ChannelBlue];
+                    var green = raw[idx + StegoConstants.ChannelGreen];
+                    var red = raw[idx + StegoConstants.ChannelRed];
                     var average = calculateAverage(red, green, blue);
                     result[y * width + x] = createPixelFromAverage(average);
                 }
@@ -74,11 +75,11 @@ namespace GroupGPixelCrypt.Model.image
             }
 
             var bitmap = new SoftwareBitmap(BitmapPixelFormat.Bgra8, width, height, BitmapAlphaMode.Premultiplied);
-            var buffer = new byte[width * height * 4];
+            var buffer = new byte[width * height * StegoConstants.BytesPerPixelBgra8];
 
             for (var i = 0; i < pixels.Length; i++)
             {
-                writePixelToBuffer(pixels[i], buffer, i * 4);
+                writePixelToBuffer(pixels[i], buffer, i * StegoConstants.BytesPerPixelBgra8);
             }
 
             bitmap.CopyFromBuffer(buffer.AsBuffer());
@@ -87,12 +88,12 @@ namespace GroupGPixelCrypt.Model.image
 
         private static int getIndex(int x, int y, int stride)
         {
-            return y * stride + x * 4;
+            return y * stride + x * StegoConstants.BytesPerPixelBgra8;
         }
 
         private static float calculateAverage(byte red, byte green, byte blue)
         {
-            return (red + green + blue) / 3.0f;
+            return (red + green + blue) / (float)StegoConstants.ChannelsPerPixel;
         }
 
         private static PixelL1 createPixelFromAverage(float average)
@@ -103,10 +104,10 @@ namespace GroupGPixelCrypt.Model.image
         private static void writePixelToBuffer(PixelL1 pixel, byte[] buffer, int idx)
         {
             var v = pixel.Luma == 1 ? (byte)255 : (byte)0;
-            buffer[idx + 0] = v;
-            buffer[idx + 1] = v;
-            buffer[idx + 2] = v;
-            buffer[idx + 3] = 255;
+            buffer[idx + StegoConstants.ChannelBlue] = v;
+            buffer[idx + StegoConstants.ChannelGreen] = v;
+            buffer[idx + StegoConstants.ChannelRed] = v;
+            buffer[idx + StegoConstants.ChannelAlpha] = StegoConstants.AlphaOpaque;
         }
 
         #endregion

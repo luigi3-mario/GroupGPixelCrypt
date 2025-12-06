@@ -1,4 +1,5 @@
 ﻿using System;
+using Windows.Graphics.Imaging;
 using GroupGPixelCrypt.Model.image;
 
 namespace GroupGPixelCrypt.Encrypters
@@ -6,6 +7,24 @@ namespace GroupGPixelCrypt.Encrypters
     public static class ImageEncrypter
     {
         #region Methods
+
+        public static SoftwareBitmap SwapQuadrants(SoftwareBitmap source)
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException(nameof(source));
+            }
+
+            var pixels = PixelBgr8.FromSoftwareBitmap(source);
+            var width = source.PixelWidth;
+            var height = source.PixelHeight;
+
+            var encryptedPixels = EncryptQuadrants(pixels, width, height);
+
+            var output = new SoftwareBitmap(BitmapPixelFormat.Bgra8, width, height, BitmapAlphaMode.Premultiplied);
+            PixelBgr8.WriteToSoftwareBitmap(encryptedPixels, output);
+            return output;
+        }
 
         public static PixelBgr8[] EncryptQuadrants(PixelBgr8[] pixels, int width, int height)
         {

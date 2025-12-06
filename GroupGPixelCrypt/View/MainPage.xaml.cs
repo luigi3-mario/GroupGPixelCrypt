@@ -7,17 +7,24 @@ using Windows.Storage.Pickers;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Imaging;
+using GroupGPixelCrypt.ViewModel;
 
 namespace GroupGPixelCrypt.View
 {
     public sealed partial class MainPage
     {
+        #region Properties
+
+        public MainViewModel ViewModel { get; } = new MainViewModel();
+
+        #endregion
+
         #region Constructors
 
         public MainPage()
         {
             this.InitializeComponent();
-            DataContext = this.viewModel;
+            DataContext = this.ViewModel;
         }
 
         #endregion
@@ -29,8 +36,8 @@ namespace GroupGPixelCrypt.View
             var file = await this.pickImageFile();
             if (file != null)
             {
-                await this.viewModel.LoadSourceImage(file);
-                await this.setImageControl(this.sourceImage, this.viewModel.SourceBitmap);
+                await this.ViewModel.LoadSourceImage(file);
+                await this.setImageControl(this.sourceImage, this.ViewModel.SourceBitmap);
             }
         }
 
@@ -39,22 +46,19 @@ namespace GroupGPixelCrypt.View
             var file = await this.pickMessageFile();
             if (file != null)
             {
-                var fileExtension = file.FileType.ToLowerInvariant();
-
-                if (fileExtension == ".png" || fileExtension == ".bmp")
+                var ext = file.FileType.ToLowerInvariant();
+                if (ext == ".png" || ext == ".bmp")
                 {
-                    await this.viewModel.LoadMessageImage(file);
-                    await this.setImageControl(this.messageImage, this.viewModel.MessageBitmap);
-
+                    await this.ViewModel.LoadMessageImage(file);
+                    await this.setImageControl(this.messageImage, this.ViewModel.MessageBitmap);
                     this.messageImage.Visibility = Visibility.Visible;
                     this.messagePreviewScrollViewer.Visibility = Visibility.Collapsed;
                     this.messagePreviewTextBlock.Text = string.Empty;
                 }
-                else if (fileExtension == ".txt")
+                else if (ext == ".txt")
                 {
-                    await this.viewModel.LoadMessageText(file);
-
-                    this.messagePreviewTextBlock.Text = this.viewModel.MessageText ?? string.Empty;
+                    await this.ViewModel.LoadMessageText(file);
+                    this.messagePreviewTextBlock.Text = this.ViewModel.MessageText ?? string.Empty;
                     this.messagePreviewScrollViewer.Visibility = Visibility.Visible;
                     this.messageImage.Visibility = Visibility.Collapsed;
                 }
@@ -65,24 +69,41 @@ namespace GroupGPixelCrypt.View
         {
             try
             {
-                this.viewModel.EncryptionUsed = this.encryptedRadioButton.IsChecked == true;
-                this.viewModel.EmbedMessage();
-
-                if (this.viewModel.TargetBitmap != null)
+                if (this.ViewModel.EncryptionUsed && !string.IsNullOrEmpty(this.ViewModel.MessageText))
                 {
-                    await this.setImageControl(this.targetImage, this.viewModel.TargetBitmap);
+                    var inputBox = new TextBox { PlaceholderText = "Keyword" };
+                    var dialog = new ContentDialog
+                    {
+                        Title = "Enter Encryption Keyword",
+                        Content = inputBox,
+                        PrimaryButtonText = "OK",
+                        CloseButtonText = "Cancel"
+                    };
+
+                    var result = await dialog.ShowAsync();
+                    if (result == ContentDialogResult.Primary)
+                    {
+                        this.ViewModel.Keyword = inputBox.Text;
+                    }
+                    else
+                    {
+                        return;
+                    }
+                }
+
+                this.ViewModel.EmbedMessage();
+
+                if (this.ViewModel.TargetBitmap != null)
+                {
+                    await this.setImageControl(this.targetImage, this.ViewModel.TargetBitmap);
                     this.targetImage.Visibility = Visibility.Visible;
                     this.messageScrollViewer.Visibility = Visibility.Collapsed;
                 }
 
-                if (this.viewModel.EncryptionUsed && this.viewModel.EncryptedPreviewBitmap != null)
+                if (this.ViewModel.EncryptedMessageBitmap != null)
                 {
-                    await this.setImageControl(this.encryptedOutputImage, this.viewModel.EncryptedPreviewBitmap);
-                    this.encryptedOutputImage.Visibility = Visibility.Visible;
-                }
-                else
-                {
-                    this.encryptedOutputImage.Visibility = Visibility.Collapsed;
+                    await this.setImageControl(this.encryptedImage, this.ViewModel.EncryptedMessageBitmap);
+                    this.encryptedImage.Visibility = Visibility.Visible;
                 }
             }
             catch (Exception ex)
@@ -95,7 +116,7 @@ namespace GroupGPixelCrypt.View
         {
             try
             {
-                var result = this.viewModel.ExtractMessage();
+                var result = this.ViewModel.ExtractMessage();
 
                 if (result != null)
                 {
@@ -104,9 +125,9 @@ namespace GroupGPixelCrypt.View
                     this.messageImage.Visibility = Visibility.Visible;
                     this.targetImage.Visibility = Visibility.Visible;
                 }
-                else if (!string.IsNullOrEmpty(this.viewModel.MessageText))
+                else if (!string.IsNullOrEmpty(this.ViewModel.MessageText))
                 {
-                    this.messageTextBlock.Text = this.viewModel.MessageText;
+                    this.messageTextBlock.Text = this.ViewModel.MessageText;
                     this.messageScrollViewer.Visibility = Visibility.Visible;
                     this.messageImage.Visibility = Visibility.Collapsed;
                     this.targetImage.Visibility = Visibility.Collapsed;
@@ -122,7 +143,7 @@ namespace GroupGPixelCrypt.View
         {
             try
             {
-                await this.viewModel.SaveTargetImageAsync();
+                await this.ViewModel.SaveTargetImageAsync();
             }
             catch (Exception ex)
             {
@@ -139,7 +160,6 @@ namespace GroupGPixelCrypt.View
             };
             picker.FileTypeFilter.Add(".png");
             picker.FileTypeFilter.Add(".bmp");
-
             return await picker.PickSingleFileAsync();
         }
 
@@ -153,7 +173,6 @@ namespace GroupGPixelCrypt.View
             picker.FileTypeFilter.Add(".png");
             picker.FileTypeFilter.Add(".bmp");
             picker.FileTypeFilter.Add(".txt");
-
             return await picker.PickSingleFileAsync();
         }
 
@@ -169,9 +188,7 @@ namespace GroupGPixelCrypt.View
                 if (bitmap.BitmapPixelFormat != BitmapPixelFormat.Bgra8 ||
                     bitmap.BitmapAlphaMode == BitmapAlphaMode.Straight)
                 {
-                    bitmap = SoftwareBitmap.Convert(bitmap,
-                        BitmapPixelFormat.Bgra8,
-                        BitmapAlphaMode.Premultiplied);
+                    bitmap = SoftwareBitmap.Convert(bitmap, BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
                 }
 
                 var source = new SoftwareBitmapSource();

@@ -1,11 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
+using Windows.Storage.Pickers;
+using GroupGPixelCrypt.Data;
+using GroupGPixelCrypt.Decrypters;
 using GroupGPixelCrypt.Embedders;
-using GroupGPixelCrypt.Helpers;
+using GroupGPixelCrypt.Encrypters;
+using GroupGPixelCrypt.Extractors;
 using GroupGPixelCrypt.Model.image;
 
 namespace GroupGPixelCrypt.ViewModel
@@ -16,13 +20,12 @@ namespace GroupGPixelCrypt.ViewModel
 
         private SoftwareBitmap sourceBitmap;
         private SoftwareBitmap messageBitmap;
-        private SoftwareBitmap targetBitmap;
-        private SoftwareBitmap encryptedPreviewBitmap;
         private string messageText;
-
-        private readonly EmbedService embedService = new EmbedService();
-        private readonly ExtractService extractService = new ExtractService();
-        private readonly SaveService saveService = new SaveService();
+        private SoftwareBitmap targetBitmap;
+        private SoftwareBitmap encryptedMessageBitmap;
+        private bool encryptionUsed;
+        private string keyword;
+        private string encryptedMessage;
 
         #endregion
 
@@ -33,23 +36,28 @@ namespace GroupGPixelCrypt.ViewModel
             get => this.sourceBitmap;
             private set
             {
-                if (this.setProperty(ref this.sourceBitmap, value, nameof(this.SourceBitmap)))
-                {
-                    this.OnPropertyChanged(nameof(this.CanEmbed));
-                    this.OnPropertyChanged(nameof(this.CanExtract));
-                }
+                this.sourceBitmap = value;
+                this.notify(nameof(this.SourceBitmap), nameof(this.CanEmbed), nameof(this.CanExtract));
             }
         }
 
         public SoftwareBitmap MessageBitmap
         {
             get => this.messageBitmap;
-            set
+            private set
             {
-                if (this.setProperty(ref this.messageBitmap, value, nameof(this.MessageBitmap)))
-                {
-                    this.OnPropertyChanged(nameof(this.CanEmbed));
-                }
+                this.messageBitmap = value;
+                this.notify(nameof(this.MessageBitmap), nameof(this.CanEmbed));
+            }
+        }
+
+        public string MessageText
+        {
+            get => this.messageText;
+            private set
+            {
+                this.messageText = value;
+                this.notify(nameof(this.MessageText), nameof(this.CanEmbed));
             }
         }
 
@@ -58,41 +66,71 @@ namespace GroupGPixelCrypt.ViewModel
             get => this.targetBitmap;
             private set
             {
-                if (this.setProperty(ref this.targetBitmap, value, nameof(this.TargetBitmap)))
-                {
-                    this.OnPropertyChanged(nameof(this.CanSave));
-                    this.OnPropertyChanged(nameof(this.CanExtract));
-                }
+                this.targetBitmap = value;
+                this.notify(nameof(this.TargetBitmap), nameof(this.CanSave));
             }
         }
 
-        public SoftwareBitmap EncryptedPreviewBitmap
+        public SoftwareBitmap EncryptedMessageBitmap
         {
-            get => this.encryptedPreviewBitmap;
-            private set =>
-                this.setProperty(ref this.encryptedPreviewBitmap, value, nameof(this.EncryptedPreviewBitmap));
+            get => this.encryptedMessageBitmap;
+            private set
+            {
+                this.encryptedMessageBitmap = value;
+                this.notify(nameof(this.EncryptedMessageBitmap));
+            }
         }
 
-        public string MessageText
+        public bool EncryptionUsed
         {
-            get => this.messageText;
+            get => this.encryptionUsed;
             set
             {
-                if (this.setProperty(ref this.messageText, value, nameof(this.MessageText)))
+                if (this.encryptionUsed != value)
                 {
-                    this.OnPropertyChanged(nameof(this.CanEmbed));
+                    this.encryptionUsed = value;
+                    this.notify(nameof(this.EncryptionUsed));
                 }
             }
         }
 
-        public byte BitsPerChannel { get; set; } = 1;
-        public bool EncryptionUsed { get; set; } = false;
+        public bool UnencryptedMode
+        {
+            get => !this.EncryptionUsed;
+            set
+            {
+                this.EncryptionUsed = !value;
+                this.notify(nameof(this.UnencryptedMode), nameof(this.EncryptionUsed));
+            }
+        }
 
-        public bool CanEmbed => this.SourceBitmap != null &&
-                                (this.MessageBitmap != null || !string.IsNullOrEmpty(this.MessageText));
+        public string Keyword
+        {
+            get => this.keyword;
+            set
+            {
+                this.keyword = value;
+                this.notify(nameof(this.Keyword));
+            }
+        }
 
-        public bool CanExtract => this.SourceBitmap != null || this.TargetBitmap != null;
+        public string EncryptedMessage
+        {
+            get => this.encryptedMessage;
+            private set
+            {
+                this.encryptedMessage = value;
+                this.notify(nameof(this.EncryptedMessage));
+            }
+        }
 
+        public int BitsPerChannel { get; set; } = 2;
+
+        public bool CanEmbed =>
+            this.SourceBitmap != null &&
+            (this.MessageBitmap != null || !string.IsNullOrEmpty(this.MessageText));
+
+        public bool CanExtract => this.SourceBitmap != null;
         public bool CanSave => this.TargetBitmap != null;
 
         #endregion
@@ -103,117 +141,189 @@ namespace GroupGPixelCrypt.ViewModel
 
         public async Task LoadSourceImage(StorageFile file)
         {
-            if (file != null)
-            {
-                var manager = await ImageManager.FromImageFile(file);
-                this.SourceBitmap = manager.SoftwareBitmap;
-            }
+            var manager = await ImageManager.FromImageFile(file);
+            this.SourceBitmap = manager.SoftwareBitmap;
         }
 
         public async Task LoadMessageImage(StorageFile file)
         {
-            if (file != null)
-            {
-                var manager = await ImageManager.FromImageFile(file);
-                this.MessageBitmap = manager.SoftwareBitmap;
-                this.MessageText = null;
-            }
+            var manager = await ImageManager.FromImageFile(file);
+            this.MessageBitmap = manager.SoftwareBitmap;
         }
 
         public async Task LoadMessageText(StorageFile file)
         {
-            if (file != null)
-            {
-                this.MessageText = await FileIO.ReadTextAsync(file);
-                this.MessageBitmap = null;
-            }
-        }
-
-        public void SetTargetBitmap(SoftwareBitmap bitmap)
-        {
-            this.TargetBitmap = bitmap;
+            this.MessageText = await FileIO.ReadTextAsync(file);
         }
 
         public void EmbedMessage()
         {
-            if (this.SourceBitmap == null)
+            try
             {
-                return;
-            }
-
-            if (this.MessageBitmap != null)
-            {
-                var padded = ImageManager.PadToMatch(this.MessageBitmap, this.SourceBitmap);
-                var finalMessage = padded;
-
-                if (this.EncryptionUsed)
+                if (!string.IsNullOrEmpty(this.MessageText))
                 {
-                    finalMessage = this.embedService.EncryptMessageBitmap(padded);
-                    this.EncryptedPreviewBitmap = finalMessage;
-                }
-                else
-                {
-                    this.EncryptedPreviewBitmap = null;
-                }
+                    var cleaned = cleanLettersOnly(this.MessageText);
 
-                var embedder = new ImageEmbedder(finalMessage, this.SourceBitmap, 1, this.EncryptionUsed);
-                var embeddedBitmap = embedder.EmbedMessage();
-                this.SetTargetBitmap(embeddedBitmap);
+                    string textToEmbed;
+                    if (this.EncryptionUsed && !string.IsNullOrEmpty(this.Keyword))
+                    {
+                        var encrypter = new TextEncrypter();
+                        this.EncryptedMessage = encrypter.EncryptMessage(this.Keyword, cleaned);
+
+                        var idxKey = this.EncryptedMessage.IndexOf("#KEY#", StringComparison.Ordinal);
+                        var idxEnd = this.EncryptedMessage.LastIndexOf("#-.-#", StringComparison.Ordinal);
+                        textToEmbed = this.EncryptedMessage.Substring(idxKey + StegoConstants.KeyMarkerLength,
+                            idxEnd - (idxKey + StegoConstants.KeyMarkerLength));
+                    }
+                    else
+                    {
+                        textToEmbed = cleaned;
+                    }
+
+                    var embedder = new TextEmbedder(textToEmbed, this.SourceBitmap, (byte)this.BitsPerChannel,
+                        this.EncryptionUsed);
+                    this.TargetBitmap = embedder.EmbedMessage();
+                }
+                else if (this.MessageBitmap != null)
+                {
+                    var toEmbed = this.MessageBitmap;
+
+                    if (this.EncryptionUsed)
+                    {
+                        var padded = ImageManager.PadToMatch(this.MessageBitmap, this.SourceBitmap);
+                        var encrypted = ImageEncrypter.SwapQuadrants(padded);
+                        this.MessageBitmap = encrypted;
+                        this.EncryptedMessageBitmap = encrypted;
+                        toEmbed = encrypted;
+                    }
+
+                    var embedder = new ImageEmbedder(toEmbed, this.SourceBitmap, (byte)this.BitsPerChannel,
+                        this.EncryptionUsed);
+                    this.TargetBitmap = embedder.EmbedMessage();
+                }
             }
-            else if (!string.IsNullOrEmpty(this.MessageText))
+            catch (Exception ex)
             {
-                this.EncryptedPreviewBitmap = null;
-                var embeddedBitmap = this.embedService.EmbedText(this.SourceBitmap, this.MessageText,
-                    this.BitsPerChannel, this.EncryptionUsed);
-                this.SetTargetBitmap(embeddedBitmap);
+                Debug.WriteLine($"[ViewModel] EmbedMessage failed: {ex.Message}");
             }
         }
 
         public SoftwareBitmap ExtractMessage()
         {
-            var bitmapToExtract = this.TargetBitmap ?? this.SourceBitmap;
-            if (bitmapToExtract == null)
+            try
             {
+                var header = HeaderManager.ReadHeader(PixelBgr8.FromSoftwareBitmap(this.SourceBitmap));
+                if (!header.hasMessage)
+                {
+                    return null;
+                }
+
+                if (header.isText)
+                {
+                    var extractor = new TextExtractor(this.SourceBitmap);
+                    var extractedBody = extractor.ExtractMessageText();
+
+                    if (header.encryptionUsed)
+                    {
+                        if (!string.IsNullOrEmpty(this.Keyword))
+                        {
+                            this.EncryptedMessage = this.Keyword.ToUpperInvariant() + "#KEY#" + extractedBody + "#-.-#";
+                            this.MessageText = TextDecrypter.DecryptBody(extractedBody, this.Keyword);
+                        }
+                        else
+                        {
+                            this.EncryptedMessage = extractedBody;
+                            this.MessageText = extractedBody;
+                        }
+                    }
+                    else
+                    {
+                        this.MessageText = extractedBody;
+                    }
+
+                    return null;
+                }
+                else
+                {
+                    var extractor = new ImageExtractor(this.SourceBitmap);
+                    var extracted = extractor.ExtractMessageBitmap();
+
+                    if (header.encryptionUsed && extracted != null)
+                    {
+                        return ImageDecrypter.DecryptQuadrants(extracted);
+                    }
+
+                    return extracted;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[ViewModel] ExtractMessage failed: {ex.Message}");
                 return null;
             }
-
-            var (text, image) = this.extractService.Extract(bitmapToExtract);
-            if (text != null)
-            {
-                this.MessageText = text;
-            }
-
-            if (image != null)
-            {
-                this.MessageBitmap = image;
-            }
-
-            return image;
         }
 
         public async Task SaveTargetImageAsync()
         {
-            if (this.TargetBitmap != null)
+            if (this.TargetBitmap == null)
             {
-                await this.saveService.SaveAsync(this.TargetBitmap);
+                return;
+            }
+
+            var picker = new FileSavePicker
+            {
+                SuggestedStartLocation = PickerLocationId.PicturesLibrary
+            };
+            picker.FileTypeChoices.Add("PNG Image", new[] { ".png" });
+            picker.SuggestedFileName = "embedded_output";
+
+            var file = await picker.PickSaveFileAsync();
+            if (file != null)
+            {
+                using (var stream = await file.OpenAsync(FileAccessMode.ReadWrite))
+                {
+                    var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
+                    encoder.SetSoftwareBitmap(this.TargetBitmap);
+                    await encoder.FlushAsync();
+                }
             }
         }
 
-        private bool setProperty<T>(ref T field, T value, string propertyName)
+        private void notify(params string[] names)
         {
-            if (EqualityComparer<T>.Default.Equals(field, value))
+            if (names == null)
             {
-                return false;
+                return;
             }
 
-            field = value;
-            this.OnPropertyChanged(propertyName);
-            return true;
+            foreach (var n in names)
+            {
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(n));
+            }
         }
 
-        private void OnPropertyChanged(string propertyName)
+        private static string cleanLettersOnly(string input)
         {
-            this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            if (string.IsNullOrEmpty(input))
+            {
+                return string.Empty;
+            }
+
+            var upper = input.ToUpperInvariant();
+            var buffer = new char[upper.Length];
+            var count = 0;
+
+            foreach (var c in upper)
+            {
+                if (c >= 'A' && c <= 'Z')
+                {
+                    buffer[count++] = c;
+                }
+            }
+
+            return new string(buffer, 0, count);
         }
+
+        #endregion
     }
 }

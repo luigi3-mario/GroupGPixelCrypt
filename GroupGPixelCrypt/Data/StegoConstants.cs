@@ -17,5 +17,14 @@
         public const byte AlphaOpaque = 255;
 
         public const int BytesPerPixelBgra8 = 4;
+
+        public const int ChannelBlue = 0;
+        public const int ChannelGreen = 1;
+        public const int ChannelRed = 2;
+        public const int ChannelAlpha = 3;
+
+        public const int KeyMarkerLength = 5; 
+       
     }
+
 }

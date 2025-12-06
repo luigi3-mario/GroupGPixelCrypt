@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using Windows.Graphics.Imaging;
 using GroupGPixelCrypt.Data;
 using GroupGPixelCrypt.Model.image;
@@ -9,106 +8,57 @@ namespace GroupGPixelCrypt.Extractors
 {
     public sealed class TextExtractor
     {
-        #region Data members
+        private readonly SoftwareBitmap source;
 
-        private readonly SoftwareBitmap embeddedImage;
-
-        #endregion
-
-        #region Constructors
-
-        public TextExtractor(SoftwareBitmap embeddedImage)
+        public TextExtractor(SoftwareBitmap source)
         {
-            this.embeddedImage = ImageManager.ConvertToCorrectFormat(
-                embeddedImage ?? throw new ArgumentNullException(nameof(embeddedImage)));
-        }
-
-        #endregion
-
-        #region Methods
-
-        public bool HasEmbeddedMessage()
-        {
-            var pixels = PixelBgr8.FromSoftwareBitmap(this.embeddedImage);
-            if (pixels.Length == 0)
-            {
-                return false;
-            }
-
-            var marker = pixels[0];
-            return marker.Red == StegoConstants.MarkerValue &&
-                   marker.Green == StegoConstants.MarkerValue &&
-                   marker.Blue == StegoConstants.MarkerValue;
+            this.source = ImageManager.ConvertToCorrectFormat(source ?? throw new ArgumentNullException(nameof(source)));
         }
 
         public string ExtractMessageText()
         {
-            var pixels = PixelBgr8.FromSoftwareBitmap(this.embeddedImage);
-            if (pixels.Length == 0)
+            var pixels = PixelBgr8.FromSoftwareBitmap(this.source);
+            var header = HeaderManager.ReadHeader(pixels);
+            var bpcc = header.bpcc;
+
+            var bits = new List<int>();
+            for (var i = StegoConstants.ReservedHeaderPixels; i < pixels.Length; i++)
             {
-                throw new InvalidOperationException("Image is empty.");
+                readChannel(bits, pixels[i].Red, bpcc);
+                readChannel(bits, pixels[i].Green, bpcc);
+                readChannel(bits, pixels[i].Blue, bpcc);
             }
 
-            var marker = pixels[0];
-            if (marker.Red != StegoConstants.MarkerValue ||
-                marker.Green != StegoConstants.MarkerValue ||
-                marker.Blue != StegoConstants.MarkerValue)
+            var symbols = new List<int>();
+            for (var i = 0; i + StegoConstants.SymbolBitLength <= bits.Count; i += StegoConstants.SymbolBitLength)
             {
-                throw new InvalidOperationException("No embedded message found (marker pixel missing).");
-            }
-
-            var bpcc = Math.Max(StegoConstants.MinBitsPerChannel,
-                Math.Min(StegoConstants.MaxBitsPerChannel, (int)pixels[1].Green));
-
-            var isText = (pixels[1].Blue & StegoConstants.LsbMask) == 1;
-            if (!isText)
-            {
-                throw new InvalidOperationException("Header indicates embedded message is not text.");
-            }
-
-            var bitStream = new List<int>(bpcc * StegoConstants.ChannelsPerPixel *
-                                          (pixels.Length - StegoConstants.ReservedHeaderPixels));
-
-            for (var pix = StegoConstants.ReservedHeaderPixels; pix < pixels.Length; pix++)
-            {
-                appendLowerBitsMsbFirst(pixels[pix].Red, bpcc, bitStream);
-                appendLowerBitsMsbFirst(pixels[pix].Green, bpcc, bitStream);
-                appendLowerBitsMsbFirst(pixels[pix].Blue, bpcc, bitStream);
-            }
-
-            var stringBuilder = new StringBuilder();
-            var bitstreamPosition = 0;
-            while (bitstreamPosition + StegoConstants.SymbolBitLength <= bitStream.Count)
-            {
-                var sym = 0;
-                for (var i = 0; i < StegoConstants.SymbolBitLength; i++)
+                var symbol = 0;
+                for (var j = 0; j < StegoConstants.SymbolBitLength; j++)
                 {
-                    sym = (sym << 1) | (bitStream[bitstreamPosition++] & 1);
+                    symbol = (symbol << 1) | bits[i + j];
                 }
-
-                if (sym == StegoConstants.TerminatorSymbol)
+                if (symbol == StegoConstants.TerminatorSymbol)
                 {
                     break;
                 }
-
-                if (sym >= 1 && sym <= StegoConstants.MaxLetterSymbol)
-                {
-                    stringBuilder.Append((char)(StegoConstants.FirstLetter + sym - 1));
-                }
+                symbols.Add(symbol);
             }
 
-            return stringBuilder.ToString();
+            var chars = new char[symbols.Count];
+            for (var i = 0; i < symbols.Count; i++)
+            {
+                chars[i] = (char)(StegoConstants.FirstLetter + symbols[i] - 1);
+            }
+
+            return new string(chars);
         }
 
-        private static void appendLowerBitsMsbFirst(byte channel, int bpcc, List<int> bitStream)
+        private static void readChannel(List<int> bits, byte channel, byte bpcc)
         {
             for (var i = bpcc - 1; i >= 0; i--)
             {
-                var bit = (channel >> i) & 1;
-                bitStream.Add(bit);
+                bits.Add((channel >> i) & 1);
             }
         }
-
-        #endregion
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Graphics.Imaging;
+using GroupGPixelCrypt.Data;
 
 namespace GroupGPixelCrypt.Model.image
 {
@@ -29,6 +30,25 @@ namespace GroupGPixelCrypt.Model.image
 
         #region Methods
 
+        public static SoftwareBitmap ToSoftwareBitmap(PixelBgr8[] pixels, int width, int height)
+        {
+            if (pixels == null)
+            {
+                throw new ArgumentNullException(nameof(pixels));
+            }
+
+            if (pixels.Length != width * height)
+            {
+                throw new ArgumentException("Pixel array size does not match dimensions.");
+            }
+
+            var raw = ToByteArray(pixels);
+
+            var bitmap = new SoftwareBitmap(BitmapPixelFormat.Bgra8, width, height, BitmapAlphaMode.Premultiplied);
+            bitmap.CopyFromBuffer(raw.AsBuffer());
+            return bitmap;
+        }
+
         public static PixelBgr8[] FromSoftwareBitmap(SoftwareBitmap source)
         {
             if (source == null)
@@ -46,10 +66,10 @@ namespace GroupGPixelCrypt.Model.image
             var height = source.PixelHeight;
             var result = new PixelBgr8[width * height];
 
-            var raw = new byte[height * width * 4];
+            var raw = new byte[height * width * StegoConstants.BytesPerPixelBgra8];
             source.CopyToBuffer(raw.AsBuffer());
 
-            var stride = width * 4;
+            var stride = width * StegoConstants.BytesPerPixelBgra8;
 
             for (var y = 0; y < height; y++)
             {
@@ -77,10 +97,10 @@ namespace GroupGPixelCrypt.Model.image
 
         public static byte[] ToByteArray(PixelBgr8[] pixels)
         {
-            var raw = new byte[pixels.Length * 4];
+            var raw = new byte[pixels.Length * StegoConstants.BytesPerPixelBgra8];
             for (var i = 0; i < pixels.Length; i++)
             {
-                writePixelToRaw(pixels[i], raw, i * 4);
+                writePixelToRaw(pixels[i], raw, i * StegoConstants.BytesPerPixelBgra8);
             }
 
             return raw;
@@ -88,30 +108,25 @@ namespace GroupGPixelCrypt.Model.image
 
         private static int getIndex(int x, int y, int stride)
         {
-            return y * stride + x * 4;
+            return y * stride + x * StegoConstants.BytesPerPixelBgra8;
         }
 
         private static PixelBgr8 createPixel(byte[] raw, int idx)
         {
             return new PixelBgr8(
-                raw[idx + 0],
-                raw[idx + 1],
-                raw[idx + 2],
-                raw[idx + 3]
+                raw[idx + StegoConstants.ChannelBlue],
+                raw[idx + StegoConstants.ChannelGreen],
+                raw[idx + StegoConstants.ChannelRed],
+                raw[idx + StegoConstants.ChannelAlpha]
             );
         }
 
         private static void writePixelToRaw(PixelBgr8 pixel, byte[] raw, int idx)
         {
-            raw[idx + 0] = pixel.Blue;
-            raw[idx + 1] = pixel.Green;
-            raw[idx + 2] = pixel.Red;
-            raw[idx + 3] = pixel.Alpha;
-        }
-
-        public static PixelBgr8 fromPixelL1(PixelL1 pixel)
-        {
-            return new PixelBgr8(pixel.Luma, pixel.Luma, pixel.Luma, 255);
+            raw[idx + StegoConstants.ChannelBlue] = pixel.Blue;
+            raw[idx + StegoConstants.ChannelGreen] = pixel.Green;
+            raw[idx + StegoConstants.ChannelRed] = pixel.Red;
+            raw[idx + StegoConstants.ChannelAlpha] = pixel.Alpha;
         }
 
         #endregion
