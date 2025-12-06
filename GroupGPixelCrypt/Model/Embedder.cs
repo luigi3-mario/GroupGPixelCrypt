@@ -43,7 +43,7 @@ namespace GroupGPixelCrypt.Model
         public Embedder(String messageString, byte bitsPerChannel, SoftwareBitmap visibleImage)
         {
             this.textManager = new TextManager();
-            this.message = this.textManager.GetMessage(messageString, bitsPerChannel);
+            this.message = this.textManager.ConvertMessageToBytes(messageString, bitsPerChannel);
             this.visibleImage = visibleImage;
             this.bitsPerChannel = bitsPerChannel;
             this.mode = Mode.Text;

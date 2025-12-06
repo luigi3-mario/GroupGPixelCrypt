@@ -13,9 +13,11 @@ namespace GroupGPixelCrypt.Model
     {
         #region Data members
 
-        private string inputText;
+        private string message;
+        private char cipherChar;
+        private char messageChar;
         private const int CharLength = 8;
-        private const int byteLength = 8;
+        private const int ByteLength = 8;
 
         #endregion
 
@@ -29,7 +31,6 @@ namespace GroupGPixelCrypt.Model
         /// </summary>
         public TextManager()
         {
-
         }
 
         #endregion
@@ -41,12 +42,11 @@ namespace GroupGPixelCrypt.Model
         /// <param name="message">The message.</param>
         /// <param name="bitsPerChannel">The bits per channel.</param>
         /// <returns>The bytes for the encoder to encode</returns>
-        public IList<byte> GetMessage(String message, int bitsPerChannel)
+        public IList<byte> ConvertMessageToBytes(String message, int bitsPerChannel)
         {
             string messageWithTerminator = message + "#-.-#";
             return this.BreakDownText(messageWithTerminator, bitsPerChannel);
         }
-
 
         private IList<byte> BreakDownText(String message, int bitsPerChannel)
         {
@@ -82,13 +82,73 @@ namespace GroupGPixelCrypt.Model
                 byte combinedByte = 0;
                 for (int i = 0; i < chunk.Count; i++)
                 {
-                    combinedByte |= (byte)(chunk[i] >> (byteLength - bitsPerChannel + i));
+                    combinedByte |= (byte)(chunk[i] >> (ByteLength - bitsPerChannel + i));
                 }
 
                 result.Add(combinedByte);
             }
 
             return result;
+        }
+
+        private char decryptChar(string cipher, string message, int index)
+        {
+            this.setupChars(cipher, message, index);
+            short cipherOffset = this.charAddNumber();
+            return (char) (this.messageChar - cipherOffset);
+        }
+
+        private void setupChars(string cipher, string message, int index)
+        {
+            this.cipherChar = cipher[index % cipher.Length];
+            this.messageChar = message[index];
+        }
+
+        private short charAddNumber()
+        {
+            if (!char.IsLetter(this.cipherChar))
+            {
+                throw new ArgumentException("cipher can only contain letters");
+            }
+            short cipherOffset = (short)(char.ToUpper(this.cipherChar) - 'A');
+            return cipherOffset;
+        }
+
+        private char encryptChar(string cipher, string message, int index)
+        {
+            this.setupChars(cipher, message, index);
+            short cipherOffset = this.charAddNumber();
+            return (char)(this.messageChar + cipherOffset);
+        }
+
+        private string decryptMessage(string cipher, string message)
+        {
+            StringBuilder result = new StringBuilder(message.Length);
+            for (int i = 0; i < message.Length; i++)
+            {
+                result.Append(this.decryptChar(cipher, message, i));
+            }
+            return result.ToString();
+        }
+
+        /// <summary>
+        /// Checks for encryption and decrypts. If no encryption is found, returns the input as is.
+        /// </summary>
+        /// <param name="input">The input.</param>
+        /// <returns></returns>
+        public string CheckForEncryptionAndDecrypt(string input)
+        {
+            if (input.Contains("#KEY#"))
+            {
+                string[] parts = input.Split("#KEY#", 2);
+                string cipher = parts[0];
+                string message = parts[1];
+                return this.decryptMessage(cipher, message);
+            }
+            else
+            {
+                return input;
+            }
         }
 
         public static byte getMask(int bitsPerChannel)
