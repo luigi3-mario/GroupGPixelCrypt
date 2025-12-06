@@ -7,12 +7,7 @@ namespace GroupGPixelCrypt.Model.text
     {
         #region Data members
 
-<<<<<<< HEAD
-        private string message;
-        private char cipherChar;
-        private char messageChar;
-=======
->>>>>>> f9088511ec8202dfa11ee13c0b476e53e6bc4ef6
+        private string inputText;
         private const int CharLength = 8;
         private const int ByteLength = 8;
 
@@ -22,7 +17,7 @@ namespace GroupGPixelCrypt.Model.text
 
         public IList<byte> GetMessage(string message, int bitsPerChannel)
         {
-<<<<<<< HEAD
+
         }
 
         #endregion
@@ -35,22 +30,11 @@ namespace GroupGPixelCrypt.Model.text
         /// <param name="bitsPerChannel">The bits per channel.</param>
         /// <returns>The bytes for the encoder to encode</returns>
         public IList<byte> ConvertMessageToBytes(String message, int bitsPerChannel)
-=======
-            var messageWithTerminator = appendTerminator(message);
-            return this.breakDownText(messageWithTerminator, bitsPerChannel);
-        }
-
-        private static string appendTerminator(string message)
->>>>>>> f9088511ec8202dfa11ee13c0b476e53e6bc4ef6
         {
             return message + "#-.-#";
         }
 
-<<<<<<< HEAD
         private IList<byte> BreakDownText(String message, int bitsPerChannel)
-=======
-        private IList<byte> breakDownText(string message, int bitsPerChannel)
->>>>>>> f9088511ec8202dfa11ee13c0b476e53e6bc4ef6
         {
             var result = new List<byte>();
             foreach (var messageChar in message)
@@ -85,23 +69,23 @@ namespace GroupGPixelCrypt.Model.text
             var result = new List<byte>();
             foreach (var chunk in chunks)
             {
-<<<<<<< HEAD
-                byte combinedByte = 0;
-                for (int i = 0; i < chunk.Count; i++)
-                {
-                    combinedByte |= (byte)(chunk[i] >> (ByteLength - bitsPerChannel + i));
-                }
-
-                result.Add(combinedByte);
-=======
                 result.Add(combineChunk(chunk, bitsPerChannel));
->>>>>>> f9088511ec8202dfa11ee13c0b476e53e6bc4ef6
             }
 
             return result;
         }
 
-<<<<<<< HEAD
+        private static byte combineChunk(IList<byte> chunk, int bitsPerChannel)
+        {
+            byte combinedByte = 0;
+            for (var i = 0; i < chunk.Count; i++)
+            {
+                combinedByte |= (byte)(chunk[i] >> (ByteLength - bitsPerChannel + i));
+            }
+
+            return combinedByte;
+        }
+
         private char decryptChar(string cipher, string message, int index)
         {
             this.setupChars(cipher, message, index);
@@ -163,20 +147,6 @@ namespace GroupGPixelCrypt.Model.text
         }
 
         public static byte getMask(int bitsPerChannel)
-=======
-        private static byte combineChunk(IList<byte> chunk, int bitsPerChannel)
-        {
-            byte combinedByte = 0;
-            for (var i = 0; i < chunk.Count; i++)
-            {
-                combinedByte |= (byte)(chunk[i] >> (ByteLength - bitsPerChannel + i));
-            }
-
-            return combinedByte;
-        }
-
-        public static byte GetMask(int bitsPerChannel)
->>>>>>> f9088511ec8202dfa11ee13c0b476e53e6bc4ef6
         {
             switch (bitsPerChannel)
             {

@@ -2,10 +2,6 @@
     x:Class="GroupGPixelCrypt.View.MainPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-<<<<<<< HEAD
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-
-=======
     xmlns:viewModel="using:GroupGPixelCrypt.ViewModel"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
@@ -13,7 +9,6 @@
         <viewModel:MainViewModel x:Name="viewModel" />
     </Page.DataContext>
 
->>>>>>> f9088511ec8202dfa11ee13c0b476e53e6bc4ef6
     <Grid Margin="40">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
@@ -24,32 +19,6 @@
 
         <!-- Source Image -->
         <StackPanel Grid.Column="0" HorizontalAlignment="Center">
-<<<<<<< HEAD
-            <Border BorderBrush="Black" BorderThickness="1" Width="350" Height="350" Margin="0,0,0,10">
-                <Image x:Name="sourceImage" Stretch="Uniform"/>
-            </Border>
-            <Button Content="Open Source Image" Width="150" Click="OpenSourceImageButton_Click"/>
-        </StackPanel>
-
-        <!-- Message Image -->
-        <StackPanel Grid.Column="1" HorizontalAlignment="Center">
-            <Border BorderBrush="Black" BorderThickness="1" Width="350" Height="350" Margin="0,0,0,10">
-                <Image x:Name="messageImage" Stretch="Uniform"/>
-            </Border>
-            <Button Content="Open Message Image" Width="150" Click="OpenMessageImageButton_Click"/>
-            <Button Content="Embed" Width="150" Margin="0,10,0,0" Click="EmbedButton_Click"/>
-            <Button Content="Extract" 
-                   Margin="0,0,0,0" Click="extractButton_Click"/>
-        </StackPanel>
-
-        <!-- Output Image -->
-        <StackPanel Grid.Column="2" HorizontalAlignment="Center">
-            <Border BorderBrush="Black" BorderThickness="1" Width="350" Height="350" Margin="0,0,0,10">
-                <Image x:Name="targetImage" Stretch="Uniform"/>
-            </Border>
-            <Button Content="Save Output Image" Width="150" Click="SaveOutputButton_Click"/>
-        </StackPanel>
-=======
             <Border BorderBrush="Black"
                     BorderThickness="1"
                     Width="350"
@@ -156,6 +125,5 @@
                              Margin="20,0,0,0" />
             </StackPanel>
         </StackPanel>
->>>>>>> f9088511ec8202dfa11ee13c0b476e53e6bc4ef6
     </Grid>
 </Page>

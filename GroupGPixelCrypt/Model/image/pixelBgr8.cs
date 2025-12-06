@@ -86,12 +86,6 @@ namespace GroupGPixelCrypt.Model.image
             return raw;
         }
 
-<<<<<<< HEAD
-        public static PixelBgr8 fromPixelL1(PixelL1 pixel)
-        {
-            return new PixelBgr8(pixel.Luma, pixel.Luma, pixel.Luma, 255);
-        }
-=======
         private static int getIndex(int x, int y, int stride)
         {
             return y * stride + x * 4;
@@ -115,7 +109,11 @@ namespace GroupGPixelCrypt.Model.image
             raw[idx + 3] = pixel.Alpha;
         }
 
+        public static PixelBgr8 fromPixelL1(PixelL1 pixel)
+        {
+            return new PixelBgr8(pixel.Luma, pixel.Luma, pixel.Luma, 255);
+        }
+
         #endregion
->>>>>>> f9088511ec8202dfa11ee13c0b476e53e6bc4ef6
     }
 }
